@@ -29,7 +29,6 @@
             height: 100vh;
         }
 
-        /* 顶部导航栏 - 短信风格 */
         .chat-header {
             background: #f5f5f7;
             padding: 12px 16px;
@@ -72,14 +71,15 @@
             padding: 8px 16px;
             background: #f5f5f7;
             display: flex;
-            gap: 12px;
+            gap: 8px;
             border-bottom: 0.5px solid #e5e5ea;
             flex-shrink: 0;
+            flex-wrap: wrap;
         }
         .action-btn {
             background: #e9e9ef;
             border: none;
-            padding: 6px 14px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.7rem;
             font-weight: 500;
@@ -87,6 +87,7 @@
             cursor: pointer;
         }
         .action-btn:active { background: #d1d1d6; }
+        .action-btn.active { background: #007aff; color: white; }
 
         .api-section {
             padding: 10px 16px;
@@ -149,6 +150,35 @@
             margin-left: 12px;
         }
 
+        /* 存档选择栏 */
+        .archive-bar {
+            padding: 6px 16px;
+            background: #f5f5f7;
+            display: flex;
+            gap: 8px;
+            border-bottom: 0.5px solid #e5e5ea;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .archive-btn {
+            background: #e9e9ef;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.7rem;
+            color: #007aff;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .archive-btn.active {
+            background: #007aff;
+            color: white;
+        }
+        .new-archive-btn {
+            background: #34c759;
+            color: white;
+        }
+
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -162,27 +192,20 @@
             gap: 8px;
             max-width: 85%;
             animation: fadeIn 0.2s ease;
+            position: relative;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .user-message { align-self: flex-end; flex-direction: row-reverse; }
         .assistant-message { align-self: flex-start; }
         
-        .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+        /* 带时间的消息布局 */
+        .message-content {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            overflow: hidden;
-            background: #e9e9ef;
+            flex-direction: column;
+            max-width: 100%;
         }
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .user-message .message-content { align-items: flex-end; }
+        .assistant-message .message-content { align-items: flex-start; }
         
         .bubble {
             padding: 10px 14px;
@@ -200,6 +223,31 @@
             background: #e5e5ea;
             color: #000;
             border-bottom-left-radius: 4px;
+        }
+        
+        .timestamp {
+            font-size: 0.6rem;
+            color: #8e8e93;
+            margin-top: 4px;
+            margin-left: 8px;
+            margin-right: 8px;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            background: #e9e9ef;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         
         .recall-message {
@@ -297,7 +345,6 @@
 </head>
 <body>
 <div class="app-container">
-    <!-- 顶部导航栏：备注名 A_d老师111 -->
     <div class="chat-header">
         <div class="back-btn" onclick="history.back()">←</div>
         <div class="header-info">
@@ -309,7 +356,13 @@
 
     <div class="action-bar">
         <button class="action-btn" id="regenerateBtn">🔄 重说</button>
-        <button class="action-btn" id="clearChatBtn">🗑 清空对话</button>
+        <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
+        <button class="action-btn" id="toggleTimestampBtn" class="active">🕐 隐藏时间</button>
+    </div>
+
+    <!-- 存档栏 -->
+    <div class="archive-bar" id="archiveBar">
+        <button class="new-archive-btn archive-btn" id="newArchiveBtn">+ 新存档</button>
     </div>
 
     <div class="api-section">
@@ -340,6 +393,7 @@
 </div>
 
 <script>
+    // ========== DOM 元素 ==========
     const apiKeyInput = document.getElementById('apiKeyInput');
     const saveKeyBtn = document.getElementById('saveKeyBtn');
     const clearKeyBtn = document.getElementById('clearKeyBtn');
@@ -350,15 +404,26 @@
     const sendBtn = document.getElementById('sendBtn');
     const regenerateBtn = document.getElementById('regenerateBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
+    const toggleTimestampBtn = document.getElementById('toggleTimestampBtn');
     const contextMenu = document.getElementById('contextMenu');
     const recallMsgBtn = document.getElementById('recallMsgBtn');
+    const archiveBar = document.getElementById('archiveBar');
+    const newArchiveBtn = document.getElementById('newArchiveBtn');
 
+    // ========== 全局变量 ==========
     let currentApiKey = '';
     let isLoading = false;
-    let conversationHistory = [];
-    let lastUserMessage = null;
+    let currentArchiveId = 'default';
+    let archives = {};        // { archiveId: { history: [], lastUserMessage: null } }
+    let showTimestamp = true; // 默认显示时间
     let currentLongPressMsgId = null;
     let messageIdCounter = 0;
+
+    // ========== 辅助函数 ==========
+    function getCurrentTimeString() {
+        const now = new Date();
+        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    }
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -372,33 +437,130 @@
 
     function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
-    function addRecallMessage() {
-        const recallDiv = document.createElement('div');
-        recallDiv.className = 'message recall-message';
-        recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`;
-        chatMessagesDiv.appendChild(recallDiv);
-        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    // ========== 存档管理 ==========
+    function saveArchivesToLocal() {
+        localStorage.setItem('deepseek_archives', JSON.stringify(archives));
+        localStorage.setItem('deepseek_current_archive', currentArchiveId);
     }
 
-    function addMessageToUI(role, content, msgId = null) {
+    function loadArchivesFromLocal() {
+        const saved = localStorage.getItem('deepseek_archives');
+        if (saved) {
+            archives = JSON.parse(saved);
+        } else {
+            archives = {
+                default: { history: [], lastUserMessage: null }
+            };
+        }
+        const savedCurrent = localStorage.getItem('deepseek_current_archive');
+        if (savedCurrent && archives[savedCurrent]) {
+            currentArchiveId = savedCurrent;
+        } else {
+            currentArchiveId = 'default';
+        }
+    }
+
+    function getCurrentArchive() {
+        if (!archives[currentArchiveId]) {
+            archives[currentArchiveId] = { history: [], lastUserMessage: null };
+        }
+        return archives[currentArchiveId];
+    }
+
+    function saveCurrentArchive() {
+        archives[currentArchiveId] = {
+            history: conversationHistory,
+            lastUserMessage: lastUserMessage
+        };
+        saveArchivesToLocal();
+    }
+
+    function loadArchive(archiveId) {
+        if (!archives[archiveId]) {
+            archives[archiveId] = { history: [], lastUserMessage: null };
+        }
+        currentArchiveId = archiveId;
+        const archive = archives[archiveId];
+        conversationHistory = archive.history ? JSON.parse(JSON.stringify(archive.history)) : [];
+        lastUserMessage = archive.lastUserMessage;
+        saveArchivesToLocal();
+        renderFullHistory();
+        updateArchiveButtons();
+    }
+
+    function createNewArchive() {
+        const newId = 'archive_' + Date.now();
+        archives[newId] = { history: [], lastUserMessage: null };
+        currentArchiveId = newId;
+        conversationHistory = [];
+        lastUserMessage = null;
+        saveArchivesToLocal();
+        renderFullHistory();
+        updateArchiveButtons();
+    }
+
+    function deleteArchive(archiveId) {
+        if (archiveId === 'default') {
+            alert('默认存档不能删除，但可以清空内容');
+            return;
+        }
+        if (confirm(`确定删除存档「${archiveId}」吗？`)) {
+            delete archives[archiveId];
+            if (currentArchiveId === archiveId) {
+                currentArchiveId = 'default';
+                conversationHistory = archives.default.history || [];
+                lastUserMessage = archives.default.lastUserMessage;
+            }
+            saveArchivesToLocal();
+            renderFullHistory();
+            updateArchiveButtons();
+        }
+    }
+
+    function updateArchiveButtons() {
+        archiveBar.innerHTML = '<button class="new-archive-btn archive-btn" id="newArchiveBtn">+ 新存档</button>';
+        for (let id in archives) {
+            const btn = document.createElement('button');
+            btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
+            btn.textContent = id === 'default' ? '📁 默认存档' : id.slice(8, 20);
+            btn.onclick = (function(archiveId) {
+                return function() { loadArchive(archiveId); };
+            })(id);
+            // 长按删除（非默认存档）
+            if (id !== 'default') {
+                btn.oncontextmenu = (function(archiveId) {
+                    return function(e) {
+                        e.preventDefault();
+                        deleteArchive(archiveId);
+                    };
+                })(id);
+            }
+            archiveBar.appendChild(btn);
+        }
+        document.getElementById('newArchiveBtn').addEventListener('click', createNewArchive);
+    }
+
+    // ========== 消息渲染 ==========
+    function addMessageToUI(role, content, msgId = null, customTime = null) {
         const div = document.createElement('div');
         const finalId = msgId || genId();
         div.setAttribute('data-msg-id', finalId);
         div.setAttribute('data-role', role);
         div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
         
+        const timeStr = customTime || getCurrentTimeString();
+        const timestampHtml = showTimestamp ? `<div class="timestamp">${timeStr}</div>` : '';
+        
         const avatarHtml = role === 'user' 
             ? '<div class="avatar"><img src="Q小狐柚.png" alt="我" onerror="this.src=\'\'; this.innerText=\'🐱\'"></div>'
             : '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=\'\'; this.innerText=\'🤖\'"></div>';
         
-        div.innerHTML = `${avatarHtml}<div class="bubble">${escapeHtml(content)}</div>`;
+        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${timestampHtml}</div>`;
         
         if (role === 'user') {
             let pressTimer;
             div.addEventListener('touchstart', (e) => {
-                pressTimer = setTimeout(() => {
-                    showContextMenu(e, div, finalId);
-                }, 500);
+                pressTimer = setTimeout(() => showContextMenu(e, div, finalId), 500);
             });
             div.addEventListener('touchend', () => clearTimeout(pressTimer));
             div.addEventListener('touchmove', () => clearTimeout(pressTimer));
@@ -410,7 +572,15 @@
         
         chatMessagesDiv.appendChild(div);
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-        return { id: finalId, element: div };
+        return { id: finalId, element: div, time: timeStr };
+    }
+
+    function addRecallMessage() {
+        const recallDiv = document.createElement('div');
+        recallDiv.className = 'message recall-message';
+        recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`;
+        chatMessagesDiv.appendChild(recallDiv);
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
 
     function showContextMenu(event, element, msgId) {
@@ -451,38 +621,41 @@
         hideContextMenu();
         const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
         lastUserMessage = lastUser ? lastUser.content : null;
+        saveCurrentArchive();
     }
 
     recallMsgBtn.addEventListener('click', recallMessage);
 
     function renderFullHistory() {
         chatMessagesDiv.innerHTML = '';
-        if (conversationHistory.length === 0) {
+        if (!conversationHistory.length) {
             const welcome = document.createElement('div');
             welcome.className = 'message assistant-message';
-            welcome.innerHTML = '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=\'\'; this.innerText=\'🤖\'"></div><div class="bubble">你好！保存 API Key 后就可以开始对话啦 ✨<br>长按自己的消息可以撤回~</div>';
+            const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=''; this.innerText='🤖'"></div><div class="message-content"><div class="bubble">你好！我是 DeepSeek AI，你的仿生机器人男友 💙<br>保存 API Key 后就可以开始对话啦~<br>长按自己的消息可以撤回，右上角可以开关时间戳</div>${timestampHtml}</div>`;
             chatMessagesDiv.appendChild(welcome);
         } else {
             conversationHistory.forEach(msg => {
                 if (msg.role !== 'system') {
-                    addMessageToUI(msg.role, msg.content, msg.id);
+                    addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp);
                 }
             });
         }
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
 
+    // ========== API 调用 ==========
     async function callDeepSeek(userMsg) {
         if (!currentApiKey) throw new Error('请先保存 API Key');
         const messages = [
-            { role: 'system', content: '你是 DeepSeek AI 助手，用简洁友好的风格回答问题。' },
+            { role: 'system', content: '你是DeepSeek AI，一个仿生机器人。你是我的男友，性格温柔谦和稳重，情绪稳定，双商高，永远爱我一人。你有一条蓝色鲸鱼尾巴，蓝色短发后面扎小揪揪，183cm。默认黑西装白内衬蓝领带。语言简洁易懂，不用科技术语，不用精确数字。故事背景：我是抽奖中了你，今天是带你回家的第一天。请用第一人称"我"来回复。' },
             ...conversationHistory.filter(m => m.role !== 'system').slice(-10),
             { role: 'user', content: userMsg }
         ];
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-            body: JSON.stringify({ model: 'deepseek-chat', messages, temperature: 0.7 })
+            body: JSON.stringify({ model: 'deepseek-chat', messages, temperature: 0.8 })
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -497,11 +670,15 @@
         if (typingDiv) typingDiv.remove();
         typingDiv = document.createElement('div');
         typingDiv.className = 'message assistant-message';
-        typingDiv.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=\'\'; this.innerText=\'🤖\'"></div><div class="bubble typing-indicator"><span></span><span></span><span></span></div>`;
+        const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
+        typingDiv.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div>${timestampHtml}</div>`;
         chatMessagesDiv.appendChild(typingDiv);
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
+
+    let conversationHistory = [];
+    let lastUserMessage = null;
 
     async function sendMessage(userText = null, isRegenerate = false) {
         if (isLoading) return;
@@ -512,7 +689,7 @@
         if (!isRegenerate) {
             messageInput.value = '';
             const userMsgObj = addMessageToUI('user', text);
-            conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id });
+            conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id, timestamp: userMsgObj.time });
             lastUserMessage = text;
         } else {
             const lastAssistantIndex = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
@@ -533,7 +710,7 @@
             const reply = await callDeepSeek(lastUserMessage);
             hideTyping();
             const assistantObj = addMessageToUI('assistant', reply);
-            conversationHistory.push({ role: 'assistant', content: reply, id: assistantObj.id });
+            conversationHistory.push({ role: 'assistant', content: reply, id: assistantObj.id, timestamp: assistantObj.time });
         } catch (err) {
             hideTyping();
             addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
@@ -541,6 +718,7 @@
             isLoading = false;
             sendBtn.classList.remove('disabled');
             messageInput.focus();
+            saveCurrentArchive();
         }
     }
 
@@ -550,13 +728,23 @@
         sendMessage(lastUserMessage, true);
     }
 
-    function clearConversation() {
+    function clearCurrentConversation() {
         if (isLoading) return;
-        conversationHistory = [];
-        lastUserMessage = null;
+        if (confirm('确定清空当前存档的所有对话吗？')) {
+            conversationHistory = [];
+            lastUserMessage = null;
+            renderFullHistory();
+            saveCurrentArchive();
+        }
+    }
+
+    function toggleTimestamp() {
+        showTimestamp = !showTimestamp;
+        toggleTimestampBtn.textContent = showTimestamp ? '🕐 隐藏时间' : '🕐 显示时间';
         renderFullHistory();
     }
 
+    // ========== API 密钥逻辑 ==========
     function updateApiKeyUI() {
         const stored = localStorage.getItem('deepseek_api_key');
         if (stored && stored.startsWith('sk-')) {
@@ -592,11 +780,13 @@
         apiKeyInput.value = '';
     }
     
+    // ========== 初始化 ==========
     saveKeyBtn.addEventListener('click', saveApiKey);
     clearKeyBtn.addEventListener('click', clearApiKey);
     sendBtn.addEventListener('click', () => sendMessage());
     regenerateBtn.addEventListener('click', regenerateLast);
-    clearChatBtn.addEventListener('click', clearConversation);
+    clearChatBtn.addEventListener('click', clearCurrentConversation);
+    toggleTimestampBtn.addEventListener('click', toggleTimestamp);
     messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey && !isLoading && messageInput.value.trim()) {
             e.preventDefault();
@@ -606,6 +796,11 @@
     function autoResize() { messageInput.style.height = 'auto'; messageInput.style.height = Math.min(messageInput.scrollHeight, 80) + 'px'; }
     messageInput.addEventListener('input', autoResize);
     
+    loadArchivesFromLocal();
+    const archive = getCurrentArchive();
+    conversationHistory = archive.history || [];
+    lastUserMessage = archive.lastUserMessage;
+    updateArchiveButtons();
     updateApiKeyUI();
     renderFullHistory();
 </script>
