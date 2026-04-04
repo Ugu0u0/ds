@@ -75,6 +75,12 @@
             cursor: pointer;
         }
 
+        /* 折叠面板容器 - 初始全部收起，只显示 💙 图标 */
+        .panels-container {
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+
         .collapse-panel {
             border-bottom: 0.5px solid #e5e5ea;
         }
@@ -86,8 +92,6 @@
             background: #f8f8fa;
             cursor: pointer;
             user-select: none;
-            position: relative;
-            z-index: 10;
         }
         .panel-title {
             font-size: 0.75rem;
@@ -102,35 +106,20 @@
             color: #8e8e93;
             transition: transform 0.2s ease;
         }
-        .panel-arrow.collapsed { transform: rotate(-90deg); }
+        .panel-arrow.collapsed {
+            transform: rotate(-90deg);
+        }
         .panel-content {
             overflow: hidden;
             transition: max-height 0.25s ease-out;
             background: #ffffff;
         }
-        .panel-content.collapsed { max-height: 0 !important; padding: 0; }
-
-        /* 悬浮最小化图标 - 💙 */
-        .floating-mini {
-            position: fixed;
-            top: 80px;
-            right: 16px;
-            width: 48px;
-            height: 48px;
-            background: #007aff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.6rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            cursor: pointer;
-            z-index: 1000;
-            transition: transform 0.1s ease;
+        .panel-content.collapsed {
+            max-height: 0 !important;
+            padding: 0;
         }
-        .floating-mini:active { transform: scale(0.95); }
 
+        /* 存档栏内部 */
         .archive-bar {
             padding: 8px 12px;
             overflow-x: auto;
@@ -226,6 +215,33 @@
             font-size: 0.55rem;
             color: #007aff;
             margin-left: 8px;
+        }
+
+        /* 主控 💙 图标 */
+        .main-toggle {
+            background: #007aff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-bottom: 0.5px solid #e5e5ea;
+        }
+        .main-toggle-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: white;
+        }
+        .main-toggle-arrow {
+            font-size: 0.8rem;
+            color: white;
+            transition: transform 0.2s ease;
+        }
+        .main-toggle-arrow.collapsed {
+            transform: rotate(180deg);
         }
 
         .chat-messages {
@@ -386,7 +402,6 @@
         }
         @keyframes blink { 0%,60%,100%{ opacity:0.3; } 30%{ opacity:1; } }
 
-        /* 记忆卷轴显示区域 */
         .memory-scroll {
             background: #f0f0f4;
             padding: 6px 12px;
@@ -414,21 +429,12 @@
             padding: 2px 6px;
             border-radius: 12px;
         }
-        .memory-content {
-            line-height: 1.4;
-        }
-        .short-memory-badge {
-            font-size: 0.55rem;
-            color: #8e8e93;
-            margin-top: 4px;
-        }
+        .memory-content { line-height: 1.4; }
+        .short-memory-badge { font-size: 0.55rem; color: #8e8e93; margin-top: 4px; }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <!-- 悬浮最小化图标 - 💙 -->
-    <div id="floatingMini" class="floating-mini" style="display: none;">💙</div>
-
     <div class="fixed-top">
         <div class="chat-header">
             <div class="back-btn" onclick="history.back()">←</div>
@@ -439,54 +445,67 @@
             <div class="call-btn">📞</div>
         </div>
 
-        <div class="collapse-panel" id="archivePanel">
-            <div class="panel-header" id="archivePanelHeader">
-                <span class="panel-title">📂 对话存档 & 备份</span>
-                <span class="panel-arrow" id="archivePanelArrow">▼</span>
+        <!-- 主控 💙 图标：点击展开/收起所有面板 -->
+        <div class="main-toggle" id="mainToggle">
+            <div class="main-toggle-left">
+                <span>💙</span>
+                <span style="font-size: 0.8rem;">AI 设置面板</span>
             </div>
-            <div class="panel-content" id="archivePanelContent">
-                <div class="archive-bar" id="archiveBar"></div>
-            </div>
+            <span class="main-toggle-arrow" id="mainToggleArrow">▼</span>
         </div>
 
-        <div class="collapse-panel" id="actionPanel">
-            <div class="panel-header" id="actionPanelHeader">
-                <span class="panel-title">⚡ 快捷操作</span>
-                <span class="panel-arrow" id="actionPanelArrow">▼</span>
-            </div>
-            <div class="panel-content" id="actionPanelContent">
-                <div class="action-bar">
-                    <button class="action-btn" id="regenerateBtn">🔄 重说</button>
-                    <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
-                    <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
-                    <button class="action-btn" id="minimizePanelsBtn">📌 最小化面板</button>
+        <!-- 三个折叠面板的容器 -->
+        <div id="panelsContainer" style="display: none;">
+            <!-- 面板1：存档 & 备份 -->
+            <div class="collapse-panel" id="archivePanel">
+                <div class="panel-header" id="archivePanelHeader">
+                    <span class="panel-title">📂 对话存档 & 备份</span>
+                    <span class="panel-arrow" id="archivePanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="archivePanelContent">
+                    <div class="archive-bar" id="archiveBar"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="collapse-panel" id="apiPanel">
-            <div class="panel-header" id="apiPanelHeader">
-                <span class="panel-title">🔑 API 密钥设置</span>
-                <span class="panel-arrow" id="apiPanelArrow">▼</span>
-            </div>
-            <div class="panel-content" id="apiPanelContent">
-                <div class="api-section">
-                    <div class="api-input-group">
-                        <label>🔑 API Key</label>
-                        <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx">
-                        <button class="save-key-btn" id="saveKeyBtn">保存</button>
+            <!-- 面板2：快捷操作 -->
+            <div class="collapse-panel" id="actionPanel">
+                <div class="panel-header" id="actionPanelHeader">
+                    <span class="panel-title">⚡ 快捷操作</span>
+                    <span class="panel-arrow" id="actionPanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="actionPanelContent">
+                    <div class="action-bar">
+                        <button class="action-btn" id="regenerateBtn">🔄 重说</button>
+                        <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
+                        <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
                     </div>
-                    <div class="status-badge">
-                        <span class="status-dot" id="statusDot"></span>
-                        <span id="statusText">未配置密钥</span>
-                        <button class="clear-btn" id="clearKeyBtn">清除</button>
+                </div>
+            </div>
+
+            <!-- 面板3：API 密钥 -->
+            <div class="collapse-panel" id="apiPanel">
+                <div class="panel-header" id="apiPanelHeader">
+                    <span class="panel-title">🔑 API 密钥设置</span>
+                    <span class="panel-arrow" id="apiPanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="apiPanelContent">
+                    <div class="api-section">
+                        <div class="api-input-group">
+                            <label>🔑 API Key</label>
+                            <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx">
+                            <button class="save-key-btn" id="saveKeyBtn">保存</button>
+                        </div>
+                        <div class="status-badge">
+                            <span class="status-dot" id="statusDot"></span>
+                            <span id="statusText">未配置密钥</span>
+                            <button class="clear-btn" id="clearKeyBtn">清除</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 记忆卷轴显示区域 -->
     <div id="memoryScrollArea" class="memory-scroll" style="display: none;">
         <div class="memory-header">
             <span class="memory-title">📜 记忆卷轴</span>
@@ -514,102 +533,158 @@
 </div>
 
 <script>
-    // ========== 折叠面板功能（修复版） ==========
-    let panelStates = { archivePanel: true, actionPanel: true, apiPanel: true };
-    let allPanelsMinimized = false;
+    // ========== 折叠面板控制 ==========
+    // 主控状态：true = 展开面板列表，false = 收起
+    let mainExpanded = false;
+    // 每个子面板的展开状态
+    let subPanelStates = {
+        archivePanel: true,
+        actionPanel: true,
+        apiPanel: true
+    };
 
-    function loadPanelStates() {
-        const saved = localStorage.getItem('deepseek_panel_states');
-        if (saved) {
-            try {
-                const states = JSON.parse(saved);
-                for (let key in states) if (panelStates.hasOwnProperty(key)) panelStates[key] = states[key];
-            } catch(e) {}
-        }
-        for (let panelId in panelStates) {
-            const content = document.getElementById(panelId + 'Content');
-            const arrow = document.getElementById(panelId + 'Arrow');
-            if (content && arrow) {
-                if (!panelStates[panelId]) {
-                    content.classList.add('collapsed');
-                    arrow.classList.add('collapsed');
-                } else {
-                    content.classList.remove('collapsed');
-                    arrow.classList.remove('collapsed');
-                }
-                if (!content.classList.contains('collapsed')) {
-                    content.style.maxHeight = content.scrollHeight + 'px';
+    const panelsContainer = document.getElementById('panelsContainer');
+    const mainToggleArrow = document.getElementById('mainToggleArrow');
+
+    // 切换主控（展开/收起所有面板）
+    function toggleMain() {
+        mainExpanded = !mainExpanded;
+        if (mainExpanded) {
+            panelsContainer.style.display = 'block';
+            mainToggleArrow.classList.remove('collapsed');
+            // 恢复子面板的展开状态
+            for (let panelId in subPanelStates) {
+                const content = document.getElementById(panelId + 'Content');
+                const arrow = document.getElementById(panelId + 'Arrow');
+                if (content && arrow) {
+                    if (subPanelStates[panelId]) {
+                        content.classList.remove('collapsed');
+                        arrow.classList.remove('collapsed');
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        setTimeout(() => content.style.maxHeight = '', 250);
+                    } else {
+                        content.classList.add('collapsed');
+                        arrow.classList.add('collapsed');
+                        content.style.maxHeight = '0';
+                    }
                 }
             }
+        } else {
+            panelsContainer.style.display = 'none';
+            mainToggleArrow.classList.add('collapsed');
         }
+        // 保存状态
+        localStorage.setItem('deepseek_main_expanded', mainExpanded);
     }
 
-    function savePanelStates() { localStorage.setItem('deepseek_panel_states', JSON.stringify(panelStates)); }
-
-    function togglePanel(panelId) {
-        if (allPanelsMinimized) return;
+    // 切换子面板
+    function toggleSubPanel(panelId) {
+        if (!mainExpanded) return; // 主控没展开时不能操作子面板
         const content = document.getElementById(panelId + 'Content');
         const arrow = document.getElementById(panelId + 'Arrow');
         if (!content || !arrow) return;
-        if (panelStates[panelId]) {
+        
+        if (subPanelStates[panelId]) {
+            // 收起
             content.style.maxHeight = content.scrollHeight + 'px';
             setTimeout(() => content.style.maxHeight = '0', 10);
-            panelStates[panelId] = false;
+            subPanelStates[panelId] = false;
             arrow.classList.add('collapsed');
         } else {
+            // 展开
             content.style.maxHeight = content.scrollHeight + 'px';
-            panelStates[panelId] = true;
+            subPanelStates[panelId] = true;
             arrow.classList.remove('collapsed');
-            setTimeout(() => { if (panelStates[panelId]) content.style.maxHeight = ''; }, 250);
+            setTimeout(() => {
+                if (subPanelStates[panelId]) content.style.maxHeight = '';
+            }, 250);
         }
-        savePanelStates();
+        // 保存状态
+        localStorage.setItem('deepseek_sub_panel_states', JSON.stringify(subPanelStates));
     }
 
-    function minimizeAllPanels() {
-        allPanelsMinimized = true;
-        for (let panelId in panelStates) {
+    // 加载保存的状态
+    function loadPanelStatesFromStorage() {
+        const savedMain = localStorage.getItem('deepseek_main_expanded');
+        if (savedMain === 'true') {
+            mainExpanded = true;
+            panelsContainer.style.display = 'block';
+            mainToggleArrow.classList.remove('collapsed');
+        } else if (savedMain === 'false') {
+            mainExpanded = false;
+            panelsContainer.style.display = 'none';
+            mainToggleArrow.classList.add('collapsed');
+        } else {
+            // 默认：收起（只显示 💙）
+            mainExpanded = false;
+            panelsContainer.style.display = 'none';
+            mainToggleArrow.classList.add('collapsed');
+        }
+        
+        const savedSub = localStorage.getItem('deepseek_sub_panel_states');
+        if (savedSub) {
+            try {
+                const states = JSON.parse(savedSub);
+                for (let key in states) {
+                    if (subPanelStates.hasOwnProperty(key)) subPanelStates[key] = states[key];
+                }
+            } catch(e) {}
+        }
+        // 应用子面板状态
+        for (let panelId in subPanelStates) {
             const content = document.getElementById(panelId + 'Content');
             const arrow = document.getElementById(panelId + 'Arrow');
-            if (content && !content.classList.contains('collapsed')) {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                setTimeout(() => content.style.maxHeight = '0', 10);
-                content.classList.add('collapsed');
-                if (arrow) arrow.classList.add('collapsed');
+            if (content && arrow) {
+                if (!subPanelStates[panelId]) {
+                    content.classList.add('collapsed');
+                    arrow.classList.add('collapsed');
+                    content.style.maxHeight = '0';
+                } else {
+                    content.classList.remove('collapsed');
+                    arrow.classList.remove('collapsed');
+                    if (mainExpanded) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        setTimeout(() => content.style.maxHeight = '', 250);
+                    }
+                }
             }
-            panelStates[panelId] = false;
         }
-        savePanelStates();
-        // 显示 💙 悬浮图标
-        document.getElementById('floatingMini').style.display = 'flex';
     }
 
-    function restoreAllPanels() {
-        allPanelsMinimized = false;
-        for (let panelId in panelStates) {
-            const content = document.getElementById(panelId + 'Content');
-            const arrow = document.getElementById(panelId + 'Arrow');
-            if (content && content.classList.contains('collapsed')) {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                content.classList.remove('collapsed');
-                if (arrow) arrow.classList.remove('collapsed');
-                setTimeout(() => content.style.maxHeight = '', 250);
-            }
-            panelStates[panelId] = true;
-        }
-        savePanelStates();
-        document.getElementById('floatingMini').style.display = 'none';
-    }
-
-    // 绑定点击事件（修复：使用独立的点击监听，不被其他元素阻挡）
-    document.getElementById('archivePanelHeader')?.addEventListener('click', () => togglePanel('archivePanel'));
-    document.getElementById('actionPanelHeader')?.addEventListener('click', () => togglePanel('actionPanel'));
-    document.getElementById('apiPanelHeader')?.addEventListener('click', () => togglePanel('apiPanel'));
+    // 绑定点击事件
+    document.getElementById('mainToggle')?.addEventListener('click', toggleMain);
+    document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
+    document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
+    document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
 
     // ========== 记忆系统 ==========
     let shortTermMemories = [];
     let longTermVolumes = [];
     let conversationCounter = 0;
+    let currentApiKey = '';
+    let isLoading = false;
+    let currentArchiveId = 'default';
+    let archives = {};
+    let showTimestamp = true;
+    let currentLongPressMsgId = null;
+    let currentLongPressRole = null;
+    let messageIdCounter = 0;
+    let conversationHistory = [];
+    let lastUserMessage = null;
 
+    function getCurrentTimeString() {
+        const now = new Date();
+        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+
+    function genId() { return Date.now() + '-' + (messageIdCounter++); }
+
+    // 记忆系统函数
     function loadMemoryFromLocal() {
         const savedShort = localStorage.getItem('deepseek_short_memories');
         const savedLong = localStorage.getItem('deepseek_long_volumes');
@@ -709,7 +784,7 @@
             for (let vol of longTermVolumes.slice(-5)) {
                 longMemoryHtml += `<div style="margin-bottom: 8px; padding-left: 8px; border-left: 2px solid #007aff;">
                     <div style="font-weight: 500; font-size: 0.6rem; color: #007aff;">第 ${vol.volumeNumber} 卷</div>
-                    <div style="font-size: 0.65rem;">${escapeHtmlSimple(vol.content.substring(0, 100))}${vol.content.length > 100 ? '...' : ''}</div>
+                    <div style="font-size: 0.65rem;">${escapeHtml(vol.content.substring(0, 100))}${vol.content.length > 100 ? '...' : ''}</div>
                 </div>`;
             }
         }
@@ -720,11 +795,6 @@
         }
         memoryContent.innerHTML = longMemoryHtml + shortHtml;
         shortBadge.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
-    }
-
-    function escapeHtmlSimple(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
 
     function getMemoryContext() {
@@ -741,7 +811,7 @@
         return context;
     }
 
-    // ========== 备份/恢复功能 ==========
+    // ========== 备份/恢复 ==========
     function exportBackup() {
         const backupData = {
             version: '2.0',
@@ -796,30 +866,7 @@
         input.click();
     }
 
-    // ========== 其他变量和函数 ==========
-    let currentApiKey = '';
-    let isLoading = false;
-    let currentArchiveId = 'default';
-    let archives = {};
-    let showTimestamp = true;
-    let currentLongPressMsgId = null;
-    let currentLongPressRole = null;
-    let messageIdCounter = 0;
-    let conversationHistory = [];
-    let lastUserMessage = null;
-
-    function getCurrentTimeString() {
-        const now = new Date();
-        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-    }
-
-    function genId() { return Date.now() + '-' + (messageIdCounter++); }
-
+    // ========== 存档管理 ==========
     function saveArchivesToLocal() {
         localStorage.setItem('deepseek_archives', JSON.stringify(archives));
         localStorage.setItem('deepseek_current_archive', currentArchiveId);
@@ -885,6 +932,7 @@
 
     function updateArchiveButtons() {
         const archiveBar = document.getElementById('archiveBar');
+        if (!archiveBar) return;
         archiveBar.innerHTML = '';
         const newBtn = document.createElement('button');
         newBtn.className = 'archive-btn new-archive-btn';
@@ -915,11 +963,240 @@
         archiveBar.appendChild(tipSpan);
     }
 
-    function deleteMessageById(msgId, showRecallTip = false) {
-        const targetMsg = document.querySelector(`[data-msg-id="${msgId}"]`);
-        if (!targetMsg) return false;
-        const index = conversationHistory.findIndex(msg => msg.id === msgId);
+    // ========== 消息相关 ==========
+    function addMessageToUI(role, content, msgId = null, customTime = null) {
+        const div = document.createElement('div');
+        const finalId = msgId || genId();
+        div.setAttribute('data-msg-id', finalId);
+        div.setAttribute('data-role', role);
+        div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
+        const timeStr = customTime || getCurrentTimeString();
+        const timestampHtml = showTimestamp ? `<div class="timestamp">${timeStr}</div>` : '';
+        const avatarHtml = role === 'user' ? '<div class="avatar"><img src="Q小狐柚.png" alt="我" onerror="this.innerText=\'🐱\'"></div>' : '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.innerText=\'🤖\'"></div>';
+        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${timestampHtml}</div>`;
+        let pressTimer;
+        div.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500); });
+        div.addEventListener('touchend', () => clearTimeout(pressTimer));
+        div.addEventListener('touchmove', () => clearTimeout(pressTimer));
+        document.getElementById('chatMessages').appendChild(div);
+        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        return { id: finalId, element: div, time: timeStr };
+    }
+
+    function addRecallMessage() {
+        const recallDiv = document.createElement('div');
+        recallDiv.className = 'message recall-message';
+        recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`;
+        document.getElementById('chatMessages').appendChild(recallDiv);
+        recallDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    function showContextMenu(event, element, msgId, role) {
+        currentLongPressMsgId = msgId;
+        currentLongPressRole = role;
+        let x = event.touches ? event.touches[0].clientX : event.clientX;
+        let y = event.touches ? event.touches[0].clientY : event.clientY;
+        const recallBtn = document.getElementById('recallMsgBtn');
+        const deleteBtn = document.getElementById('deleteMsgBtn');
+        recallBtn.style.display = role === 'user' ? 'block' : 'none';
+        deleteBtn.textContent = role === 'user' ? '🗑 删除消息' : '🗑 删除 AI 消息';
+        const menu = document.getElementById('contextMenu');
+        menu.style.display = 'block';
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+        setTimeout(() => document.addEventListener('click', hideContextMenu), 100);
+    }
+
+    function hideContextMenu() {
+        document.getElementById('contextMenu').style.display = 'none';
+        document.removeEventListener('click', hideContextMenu);
+    }
+
+    function recallUserMessage() {
+        if (!currentLongPressMsgId) return;
+        const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
+        if (!targetMsg) return;
+        const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
+        if (index !== -1) {
+            conversationHistory.splice(index, 1);
+            if (conversationHistory[index+1]?.role === 'assistant') conversationHistory.splice(index+1, 1);
+        }
+        targetMsg.remove();
+        addRecallMessage();
+        hideContextMenu();
+        const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
+        lastUserMessage = lastUser ? lastUser.content : null;
+        saveCurrentArchive();
+    }
+
+    function deleteAnyMessage() {
+        if (!currentLongPressMsgId) return;
+        const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
+        if (!targetMsg) return;
+        const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
         if (index !== -1) conversationHistory.splice(index, 1);
         targetMsg.remove();
-        if (showRecallTip) addRecallMessage();
-        const lastUser = [...conversation
+        hideContextMenu();
+        const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
+        lastUserMessage = lastUser ? lastUser.content : null;
+        saveCurrentArchive();
+    }
+
+    document.getElementById('recallMsgBtn')?.addEventListener('click', recallUserMessage);
+    document.getElementById('deleteMsgBtn')?.addEventListener('click', deleteAnyMessage);
+
+    function renderFullHistory() {
+        const chatDiv = document.getElementById('chatMessages');
+        chatDiv.innerHTML = '';
+        if (!conversationHistory.length) {
+            const welcome = document.createElement('div');
+            welcome.className = 'message assistant-message';
+            const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>我会记住我们的对话，每15轮总结一次记忆</div>${timestampHtml}</div>`;
+            chatDiv.appendChild(welcome);
+        } else {
+            conversationHistory.forEach(msg => { if (msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
+        }
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    async function callDeepSeek(userMsg) {
+        if (!currentApiKey) throw new Error('请先保存 API Key');
+        const memoryContext = getMemoryContext();
+        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。` : '请用自然友好的方式和我聊天。';
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            ...conversationHistory.filter(m => m.role !== 'system').slice(-25),
+            { role: 'user', content: userMsg }
+        ];
+        const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+            body: JSON.stringify({ model: 'deepseek-chat', messages, temperature: 0.8 })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.choices[0].message.content;
+    }
+
+    let typingDiv = null;
+    function showTyping() {
+        if (typingDiv) typingDiv.remove();
+        typingDiv = document.createElement('div');
+        typingDiv.className = 'message assistant-message';
+        typingDiv.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div></div>`;
+        document.getElementById('chatMessages').appendChild(typingDiv);
+        typingDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+    function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
+
+    async function sendMessage(userText = null, isRegenerate = false) {
+        if (isLoading) return;
+        let text = userText !== null ? userText : document.getElementById('messageInput').value.trim();
+        if (!text) return;
+        if (!currentApiKey) { alert('请先保存 API Key'); return; }
+        if (!isRegenerate) {
+            document.getElementById('messageInput').value = '';
+            const userMsgObj = addMessageToUI('user', text);
+            conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id, timestamp: userMsgObj.time });
+            lastUserMessage = text;
+        } else {
+            const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
+            if (lastAI !== -1) {
+                const realIdx = conversationHistory.length - 1 - lastAI;
+                const removed = conversationHistory.splice(realIdx, 1)[0];
+                if (removed?.id) document.querySelector(`[data-msg-id="${removed.id}"]`)?.remove();
+            }
+        }
+        isLoading = true;
+        document.getElementById('sendBtn').classList.add('disabled');
+        showTyping();
+        try {
+            const reply = await callDeepSeek(lastUserMessage);
+            hideTyping();
+            const assistantObj = addMessageToUI('assistant', reply);
+            conversationHistory.push({ role: 'assistant', content: reply, id: assistantObj.id, timestamp: assistantObj.time });
+            if (!isRegenerate) {
+                conversationCounter++;
+                saveMemoryToLocal();
+                updateMemoryDisplay();
+                if (conversationCounter % 15 === 0) {
+                    const recentMessages = conversationHistory.slice(-30);
+                    const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
+                    await summarizeToShortMemory(conversationText);
+                }
+            }
+        } catch (err) {
+            hideTyping();
+            addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
+        } finally {
+            isLoading = false;
+            document.getElementById('sendBtn').classList.remove('disabled');
+            document.getElementById('messageInput').focus();
+            saveCurrentArchive();
+        }
+    }
+
+    function regenerateLast() { if (!isLoading && lastUserMessage) sendMessage(lastUserMessage, true); else if (!lastUserMessage) alert('没有可以重说的消息'); }
+    function clearCurrentConversation() { if (confirm('清空当前存档？')) { conversationHistory = []; lastUserMessage = null; renderFullHistory(); saveCurrentArchive(); } }
+    function toggleTimestamp() { showTimestamp = !showTimestamp; const btn = document.getElementById('toggleTimestampBtn'); if (btn) btn.textContent = showTimestamp ? '🕐 隐藏时间' : '🕐 显示时间'; renderFullHistory(); }
+
+    function updateApiKeyUI() {
+        const stored = localStorage.getItem('deepseek_api_key');
+        const apiInput = document.getElementById('apiKeyInput');
+        const statusDotEl = document.getElementById('statusDot');
+        const statusTextEl = document.getElementById('statusText');
+        const clearBtn = document.getElementById('clearKeyBtn');
+        if (stored && stored.startsWith('sk-')) {
+            currentApiKey = stored;
+            apiInput.value = '••••••••••••••••';
+            statusDotEl.classList.add('active');
+            statusTextEl.innerText = '密钥已就绪 ✅';
+            clearBtn.style.display = 'inline-block';
+        } else {
+            currentApiKey = '';
+            apiInput.value = '';
+            statusDotEl.classList.remove('active');
+            statusTextEl.innerText = '未配置密钥';
+            clearBtn.style.display = 'none';
+        }
+    }
+
+    function saveApiKey() {
+        let key = document.getElementById('apiKeyInput').value.trim();
+        if (key === '••••••••••••••••' && currentApiKey) return;
+        if (!key.startsWith('sk-')) { alert('请填写有效的 DeepSeek API Key'); return; }
+        localStorage.setItem('deepseek_api_key', key);
+        currentApiKey = key;
+        updateApiKeyUI();
+        document.getElementById('apiKeyInput').value = '••••••••••••••••';
+        alert('✅ API Key 已保存');
+    }
+
+    function clearApiKey() { localStorage.removeItem('deepseek_api_key'); currentApiKey = ''; updateApiKeyUI(); document.getElementById('apiKeyInput').value = ''; }
+
+    // 绑定事件
+    document.getElementById('saveKeyBtn')?.addEventListener('click', saveApiKey);
+    document.getElementById('clearKeyBtn')?.addEventListener('click', clearApiKey);
+    document.getElementById('sendBtn')?.addEventListener('click', () => sendMessage());
+    document.getElementById('regenerateBtn')?.addEventListener('click', regenerateLast);
+    document.getElementById('clearChatBtn')?.addEventListener('click', clearCurrentConversation);
+    document.getElementById('toggleTimestampBtn')?.addEventListener('click', toggleTimestamp);
+    document.getElementById('refreshMemoryBtn')?.addEventListener('click', forceSynthesize);
+    document.getElementById('messageInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !isLoading && e.target.value.trim()) { e.preventDefault(); sendMessage(); } });
+    function autoResize() { const input = document.getElementById('messageInput'); input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 80) + 'px'; }
+    document.getElementById('messageInput')?.addEventListener('input', autoResize);
+
+    // 初始化
+    loadArchivesFromLocal();
+    loadMemoryFromLocal();
+    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null };
+    conversationHistory = archive.history || [];
+    lastUserMessage = archive.lastUserMessage;
+    updateArchiveButtons();
+    updateApiKeyUI();
+    renderFullHistory();
+    loadPanelStatesFromStorage();
+</script>
+</body>
+</html>
