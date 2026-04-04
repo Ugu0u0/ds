@@ -27,6 +27,15 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            position: relative;
+        }
+
+        /* ========== 固定顶部区域 ========== */
+        .fixed-top {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
         }
 
         .chat-header {
@@ -36,7 +45,6 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-shrink: 0;
         }
         .back-btn {
             font-size: 24px;
@@ -67,12 +75,11 @@
             cursor: pointer;
         }
 
-        /* 存档栏 - 放在最顶部下面 */
+        /* 存档栏 */
         .archive-bar {
             background: #ffffff;
             padding: 8px 12px;
             border-bottom: 0.5px solid #e5e5ea;
-            flex-shrink: 0;
             overflow-x: auto;
             white-space: nowrap;
             display: flex;
@@ -109,7 +116,6 @@
             display: flex;
             gap: 8px;
             border-bottom: 0.5px solid #e5e5ea;
-            flex-shrink: 0;
             flex-wrap: wrap;
         }
         .action-btn {
@@ -128,7 +134,6 @@
             padding: 8px 12px;
             background: #f9f9fb;
             border-bottom: 0.5px solid #e5e5ea;
-            flex-shrink: 0;
         }
         .api-input-group {
             display: flex;
@@ -183,6 +188,7 @@
             margin-left: 8px;
         }
 
+        /* ========== 中间聊天区域 - 可滚动 ========== */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -191,6 +197,56 @@
             flex-direction: column;
             gap: 8px;
         }
+
+        /* ========== 固定底部输入区域 ========== */
+        .fixed-bottom {
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+            background: #f5f5f7;
+            border-top: 0.5px solid #e5e5ea;
+        }
+
+        .input-area {
+            padding: 10px 12px 14px;
+            background: #f5f5f7;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .input-wrapper {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 28px;
+            border: 0.5px solid #e5e5ea;
+        }
+        #messageInput {
+            width: 100%;
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 28px;
+            font-size: 0.9rem;
+            resize: none;
+            font-family: inherit;
+            outline: none;
+        }
+        #sendBtn {
+            background: #007aff;
+            width: 38px;
+            height: 38px;
+            border-radius: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        #sendBtn.disabled { background: #c6c6c8; pointer-events: none; }
+
+        /* 消息样式 */
         .message {
             display: flex;
             gap: 8px;
@@ -298,93 +354,57 @@
             animation: blink 1.4s infinite;
         }
         @keyframes blink { 0%,60%,100%{ opacity:0.3; } 30%{ opacity:1; } }
-
-        .input-area {
-            padding: 10px 12px 14px;
-            background: #f5f5f7;
-            border-top: 0.5px solid #e5e5ea;
-            display: flex;
-            gap: 8px;
-            align-items: flex-end;
-            flex-shrink: 0;
-        }
-        .input-wrapper {
-            flex: 1;
-            background: #ffffff;
-            border-radius: 28px;
-            border: 0.5px solid #e5e5ea;
-        }
-        #messageInput {
-            width: 100%;
-            padding: 8px 14px;
-            border: none;
-            background: transparent;
-            border-radius: 28px;
-            font-size: 0.9rem;
-            resize: none;
-            font-family: inherit;
-            outline: none;
-        }
-        #sendBtn {
-            background: #007aff;
-            width: 38px;
-            height: 38px;
-            border-radius: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            color: white;
-            font-size: 1.1rem;
-            cursor: pointer;
-        }
-        #sendBtn.disabled { background: #c6c6c8; pointer-events: none; }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <!-- 顶部导航栏 -->
-    <div class="chat-header">
-        <div class="back-btn" onclick="history.back()">←</div>
-        <div class="header-info">
-            <div class="contact-name">A_d老师111</div>
-            <div class="contact-status">DeepSeek AI · 在线</div>
+    <!-- ========== 固定顶部区域 ========== -->
+    <div class="fixed-top">
+        <div class="chat-header">
+            <div class="back-btn" onclick="history.back()">←</div>
+            <div class="header-info">
+                <div class="contact-name">A_d老师111</div>
+                <div class="contact-status">DeepSeek AI · 在线</div>
+            </div>
+            <div class="call-btn">📞</div>
         </div>
-        <div class="call-btn">📞</div>
-    </div>
 
-    <!-- ========== 存档栏：放在这里，一定看得到 ========== -->
-    <div class="archive-bar" id="archiveBar">
-        <button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button>
-        <span class="archive-tip">💡 长按存档名可删除</span>
-    </div>
-
-    <div class="action-bar">
-        <button class="action-btn" id="regenerateBtn">🔄 重说</button>
-        <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
-        <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
-    </div>
-
-    <div class="api-section">
-        <div class="api-input-group">
-            <label>🔑 API Key</label>
-            <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx">
-            <button class="save-key-btn" id="saveKeyBtn">保存</button>
+        <div class="archive-bar" id="archiveBar">
+            <button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button>
+            <span class="archive-tip">💡 长按存档名删除</span>
         </div>
-        <div class="status-badge">
-            <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">未配置密钥</span>
-            <button class="clear-btn" id="clearKeyBtn">清除</button>
+
+        <div class="action-bar">
+            <button class="action-btn" id="regenerateBtn">🔄 重说</button>
+            <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
+            <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
+        </div>
+
+        <div class="api-section">
+            <div class="api-input-group">
+                <label>🔑 API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx">
+                <button class="save-key-btn" id="saveKeyBtn">保存</button>
+            </div>
+            <div class="status-badge">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">未配置密钥</span>
+                <button class="clear-btn" id="clearKeyBtn">清除</button>
+            </div>
         </div>
     </div>
 
+    <!-- ========== 中间聊天区域（可滚动） ========== -->
     <div class="chat-messages" id="chatMessages"></div>
 
-    <div class="input-area">
-        <div class="input-wrapper">
-            <textarea id="messageInput" rows="1" placeholder="iMessage 输入..."></textarea>
+    <!-- ========== 固定底部输入区域 ========== -->
+    <div class="fixed-bottom">
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="messageInput" rows="1" placeholder="iMessage 输入..."></textarea>
+            </div>
+            <button id="sendBtn">➤</button>
         </div>
-        <button id="sendBtn">➤</button>
     </div>
 </div>
 
@@ -421,6 +441,7 @@
     let conversationHistory = [];
     let lastUserMessage = null;
 
+    // ========== 辅助函数 ==========
     function getCurrentTimeString() {
         const now = new Date();
         return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
@@ -438,7 +459,7 @@
 
     function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
-    // ========== 存档管理 ==========
+    // ========== 存档管理（自动保存） ==========
     function saveArchivesToLocal() {
         localStorage.setItem('deepseek_archives', JSON.stringify(archives));
         localStorage.setItem('deepseek_current_archive', currentArchiveId);
@@ -459,6 +480,7 @@
         }
     }
 
+    // 保存当前存档（每次修改后调用）
     function saveCurrentArchive() {
         archives[currentArchiveId] = {
             history: JSON.parse(JSON.stringify(conversationHistory)),
@@ -510,7 +532,6 @@
     }
 
     function updateArchiveButtons() {
-        // 保留新建按钮和提示
         archiveBar.innerHTML = '';
         const newBtn = document.createElement('button');
         newBtn.className = 'archive-btn new-archive-btn';
@@ -623,7 +644,7 @@
         hideContextMenu();
         const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
         lastUserMessage = lastUser ? lastUser.content : null;
-        saveCurrentArchive();
+        saveCurrentArchive();  // 自动保存
     }
 
     recallMsgBtn.addEventListener('click', recallMessage);
@@ -717,7 +738,7 @@
             isLoading = false;
             sendBtn.classList.remove('disabled');
             messageInput.focus();
-            saveCurrentArchive();
+            saveCurrentArchive();  // 自动保存
         }
     }
 
@@ -733,7 +754,7 @@
             conversationHistory = [];
             lastUserMessage = null;
             renderFullHistory();
-            saveCurrentArchive();
+            saveCurrentArchive();  // 自动保存
         }
     }
 
