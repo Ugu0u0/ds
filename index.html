@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <title>DeepSeek AI · 短信助手</title>
+    <title>A_d老师111 · 短信</title>
     <style>
-        /* ========== 基础样式 ========== */
         * {
             margin: 0;
             padding: 0;
@@ -21,7 +20,6 @@
             min-height: 100vh;
         }
 
-        /* 纯短信界面，无手机边框 */
         .app-container {
             width: 100%;
             max-width: 500px;
@@ -29,7 +27,6 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            position: relative;
         }
 
         /* 顶部导航栏 - 短信风格 */
@@ -40,9 +37,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            flex-shrink: 0;
         }
         .back-btn {
             font-size: 24px;
@@ -73,13 +68,13 @@
             cursor: pointer;
         }
 
-        /* 功能按钮栏 */
         .action-bar {
             padding: 8px 16px;
             background: #f5f5f7;
             display: flex;
             gap: 12px;
             border-bottom: 0.5px solid #e5e5ea;
+            flex-shrink: 0;
         }
         .action-btn {
             background: #e9e9ef;
@@ -93,11 +88,11 @@
         }
         .action-btn:active { background: #d1d1d6; }
 
-        /* API 区域 */
         .api-section {
             padding: 10px 16px;
             background: #f9f9fb;
             border-bottom: 0.5px solid #e5e5ea;
+            flex-shrink: 0;
         }
         .api-input-group {
             display: flex;
@@ -154,7 +149,6 @@
             margin-left: 12px;
         }
 
-        /* 聊天区域 - iMessage 气泡 */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -168,13 +162,11 @@
             gap: 8px;
             max-width: 85%;
             animation: fadeIn 0.2s ease;
-            position: relative;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .user-message { align-self: flex-end; flex-direction: row-reverse; }
         .assistant-message { align-self: flex-start; }
         
-        /* 头像 */
         .avatar {
             width: 36px;
             height: 36px;
@@ -199,20 +191,17 @@
             line-height: 1.4;
             word-break: break-word;
         }
-        /* 用户气泡：蓝色 */
         .user-message .bubble {
             background: #007aff;
             color: white;
             border-bottom-right-radius: 4px;
         }
-        /* AI 气泡：灰色 */
         .assistant-message .bubble {
             background: #e5e5ea;
             color: #000;
             border-bottom-left-radius: 4px;
         }
         
-        /* 撤回提示消息 */
         .recall-message {
             align-self: center;
             max-width: 90%;
@@ -226,7 +215,6 @@
             border-radius: 20px;
         }
         
-        /* 长按菜单 */
         .context-menu {
             position: fixed;
             background: white;
@@ -265,7 +253,6 @@
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes blink { 0%,60%,100%{ opacity:0.3; } 30%{ opacity:1; } }
 
-        /* 输入区域 */
         .input-area {
             padding: 12px 16px 16px;
             background: #f5f5f7;
@@ -273,6 +260,7 @@
             display: flex;
             gap: 10px;
             align-items: flex-end;
+            flex-shrink: 0;
         }
         .input-wrapper {
             flex: 1;
@@ -309,7 +297,7 @@
 </head>
 <body>
 <div class="app-container">
-    <!-- 顶部导航栏：备注名显示为 "A_d老师111" -->
+    <!-- 顶部导航栏：备注名 A_d老师111 -->
     <div class="chat-header">
         <div class="back-btn" onclick="history.back()">←</div>
         <div class="header-info">
@@ -319,7 +307,6 @@
         <div class="call-btn">📞</div>
     </div>
 
-    <!-- 功能按钮栏 -->
     <div class="action-bar">
         <button class="action-btn" id="regenerateBtn">🔄 重说</button>
         <button class="action-btn" id="clearChatBtn">🗑 清空对话</button>
@@ -348,13 +335,11 @@
     </div>
 </div>
 
-<!-- 长按菜单 -->
 <div id="contextMenu" class="context-menu">
     <button id="recallMsgBtn">💬 撤回这条消息</button>
 </div>
 
 <script>
-    // ========== DOM 元素 ==========
     const apiKeyInput = document.getElementById('apiKeyInput');
     const saveKeyBtn = document.getElementById('saveKeyBtn');
     const clearKeyBtn = document.getElementById('clearKeyBtn');
@@ -372,12 +357,9 @@
     let isLoading = false;
     let conversationHistory = [];
     let lastUserMessage = null;
-    let currentLongPressElement = null;
     let currentLongPressMsgId = null;
-
     let messageIdCounter = 0;
-    
-    // ========== 辅助函数 ==========
+
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -390,7 +372,6 @@
 
     function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
-    // 添加撤回提示消息
     function addRecallMessage() {
         const recallDiv = document.createElement('div');
         recallDiv.className = 'message recall-message';
@@ -399,7 +380,6 @@
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
 
-    // 添加消息到UI（使用图片头像）
     function addMessageToUI(role, content, msgId = null) {
         const div = document.createElement('div');
         const finalId = msgId || genId();
@@ -407,16 +387,13 @@
         div.setAttribute('data-role', role);
         div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
         
-        // 使用图片头像
         const avatarHtml = role === 'user' 
-            ? '<div class="avatar"><img src="Q小狐柚.png" alt="我"></div>'
-            : '<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div>';
+            ? '<div class="avatar"><img src="Q小狐柚.png" alt="我" onerror="this.src=\'\'; this.innerText=\'🐱\'"></div>'
+            : '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=\'\'; this.innerText=\'🤖\'"></div>';
         
         div.innerHTML = `${avatarHtml}<div class="bubble">${escapeHtml(content)}</div>`;
         
-        // 仅用户消息支持长按撤回
         if (role === 'user') {
-            div.style.cursor = 'pointer';
             let pressTimer;
             div.addEventListener('touchstart', (e) => {
                 pressTimer = setTimeout(() => {
@@ -437,7 +414,6 @@
     }
 
     function showContextMenu(event, element, msgId) {
-        currentLongPressElement = element;
         currentLongPressMsgId = msgId;
         let x, y;
         if (event.touches) {
@@ -450,9 +426,7 @@
         contextMenu.style.display = 'block';
         contextMenu.style.left = x + 'px';
         contextMenu.style.top = y + 'px';
-        setTimeout(() => {
-            document.addEventListener('click', hideContextMenu);
-        }, 100);
+        setTimeout(() => document.addEventListener('click', hideContextMenu), 100);
     }
 
     function hideContextMenu() {
@@ -460,7 +434,6 @@
         document.removeEventListener('click', hideContextMenu);
     }
 
-    // 撤回功能
     function recallMessage() {
         if (!currentLongPressMsgId) return;
         const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
@@ -469,13 +442,10 @@
         const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
         if (index !== -1) {
             conversationHistory.splice(index, 1);
-            if (conversationHistory[index] && conversationHistory[index].role === 'assistant') {
-                conversationHistory.splice(index, 1);
-            } else if (conversationHistory[index+1]?.role === 'assistant') {
+            if (conversationHistory[index+1]?.role === 'assistant') {
                 conversationHistory.splice(index+1, 1);
             }
         }
-        
         targetMsg.remove();
         addRecallMessage();
         hideContextMenu();
@@ -485,13 +455,12 @@
 
     recallMsgBtn.addEventListener('click', recallMessage);
 
-    // 渲染历史
     function renderFullHistory() {
         chatMessagesDiv.innerHTML = '';
         if (conversationHistory.length === 0) {
             const welcome = document.createElement('div');
             welcome.className = 'message assistant-message';
-            welcome.innerHTML = '<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="bubble">你好！保存 API Key 后就可以开始对话啦 ✨<br>长按自己的消息可以撤回~</div>';
+            welcome.innerHTML = '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=\'\'; this.innerText=\'🤖\'"></div><div class="bubble">你好！保存 API Key 后就可以开始对话啦 ✨<br>长按自己的消息可以撤回~</div>';
             chatMessagesDiv.appendChild(welcome);
         } else {
             conversationHistory.forEach(msg => {
@@ -503,7 +472,6 @@
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
 
-    // API调用
     async function callDeepSeek(userMsg) {
         if (!currentApiKey) throw new Error('请先保存 API Key');
         const messages = [
@@ -529,7 +497,7 @@
         if (typingDiv) typingDiv.remove();
         typingDiv = document.createElement('div');
         typingDiv.className = 'message assistant-message';
-        typingDiv.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="bubble typing-indicator"><span></span><span></span><span></span></div>`;
+        typingDiv.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=\'\'; this.innerText=\'🤖\'"></div><div class="bubble typing-indicator"><span></span><span></span><span></span></div>`;
         chatMessagesDiv.appendChild(typingDiv);
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
@@ -578,10 +546,7 @@
 
     function regenerateLast() {
         if (isLoading) return;
-        if (!lastUserMessage) {
-            alert('没有可以重说的消息');
-            return;
-        }
+        if (!lastUserMessage) { alert('没有可以重说的消息'); return; }
         sendMessage(lastUserMessage, true);
     }
 
@@ -592,7 +557,6 @@
         renderFullHistory();
     }
 
-    // API密钥逻辑
     function updateApiKeyUI() {
         const stored = localStorage.getItem('deepseek_api_key');
         if (stored && stored.startsWith('sk-')) {
@@ -609,6 +573,7 @@
             clearKeyBtn.style.display = 'none';
         }
     }
+
     function saveApiKey() {
         let key = apiKeyInput.value.trim();
         if (key === '••••••••••••••••' && currentApiKey) return;
@@ -619,6 +584,7 @@
         apiKeyInput.value = '••••••••••••••••';
         alert('✅ API Key 已保存');
     }
+
     function clearApiKey() {
         localStorage.removeItem('deepseek_api_key');
         currentApiKey = '';
