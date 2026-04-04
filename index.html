@@ -30,7 +30,6 @@
             position: relative;
         }
 
-        /* ========== 固定顶部区域 ========== */
         .fixed-top {
             position: sticky;
             top: 0;
@@ -75,7 +74,6 @@
             cursor: pointer;
         }
 
-        /* 存档栏 */
         .archive-bar {
             background: #ffffff;
             padding: 8px 12px;
@@ -188,7 +186,6 @@
             margin-left: 8px;
         }
 
-        /* ========== 中间聊天区域 - 可滚动 ========== */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -198,7 +195,6 @@
             gap: 8px;
         }
 
-        /* ========== 固定底部输入区域 ========== */
         .fixed-bottom {
             position: sticky;
             bottom: 0;
@@ -246,7 +242,6 @@
         }
         #sendBtn.disabled { background: #c6c6c8; pointer-events: none; }
 
-        /* 消息样式 */
         .message {
             display: flex;
             gap: 8px;
@@ -328,18 +323,19 @@
             padding: 8px 0;
             z-index: 1000;
             display: none;
-            min-width: 130px;
+            min-width: 140px;
         }
         .context-menu button {
             display: block;
             width: 100%;
-            padding: 8px 14px;
+            padding: 10px 16px;
             border: none;
             background: none;
             text-align: left;
             font-size: 0.85rem;
             cursor: pointer;
         }
+        .context-menu button:active { background: #e5e5ea; }
         
         .typing-indicator {
             display: flex;
@@ -358,7 +354,6 @@
 </head>
 <body>
 <div class="app-container">
-    <!-- ========== 固定顶部区域 ========== -->
     <div class="fixed-top">
         <div class="chat-header">
             <div class="back-btn" onclick="history.back()">←</div>
@@ -394,10 +389,8 @@
         </div>
     </div>
 
-    <!-- ========== 中间聊天区域（可滚动） ========== -->
     <div class="chat-messages" id="chatMessages"></div>
 
-    <!-- ========== 固定底部输入区域 ========== -->
     <div class="fixed-bottom">
         <div class="input-area">
             <div class="input-wrapper">
@@ -410,6 +403,7 @@
 
 <div id="contextMenu" class="context-menu">
     <button id="recallMsgBtn">💬 撤回这条消息</button>
+    <button id="deleteMsgBtn">🗑 删除消息</button>
 </div>
 
 <script>
@@ -427,6 +421,7 @@
     const toggleTimestampBtn = document.getElementById('toggleTimestampBtn');
     const contextMenu = document.getElementById('contextMenu');
     const recallMsgBtn = document.getElementById('recallMsgBtn');
+    const deleteMsgBtn = document.getElementById('deleteMsgBtn');
     const archiveBar = document.getElementById('archiveBar');
     const newArchiveBtn = document.getElementById('newArchiveBtn');
 
@@ -437,6 +432,7 @@
     let archives = {};
     let showTimestamp = true;
     let currentLongPressMsgId = null;
+    let currentLongPressRole = null;
     let messageIdCounter = 0;
     let conversationHistory = [];
     let lastUserMessage = null;
@@ -459,7 +455,7 @@
 
     function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
-    // ========== 存档管理（自动保存） ==========
+    // ========== 存档管理 ==========
     function saveArchivesToLocal() {
         localStorage.setItem('deepseek_archives', JSON.stringify(archives));
         localStorage.setItem('deepseek_current_archive', currentArchiveId);
@@ -480,7 +476,6 @@
         }
     }
 
-    // 保存当前存档（每次修改后调用）
     function saveCurrentArchive() {
         archives[currentArchiveId] = {
             history: JSON.parse(JSON.stringify(conversationHistory)),
@@ -563,6 +558,33 @@
         archiveBar.appendChild(tipSpan);
     }
 
+    // ========== 通用删除消息函数 ==========
+    function deleteMessageById(msgId, showRecallTip = false) {
+        const targetMsg = document.querySelector(`[data-msg-id="${msgId}"]`);
+        if (!targetMsg) return false;
+        
+        const index = conversationHistory.findIndex(msg => msg.id === msgId);
+        if (index !== -1) {
+            conversationHistory.splice(index, 1);
+        }
+        targetMsg.remove();
+        
+        if (showRecallTip && conversationHistory[index]?.role === 'user') {
+            addRecallMessage();
+        }
+        
+        // 更新 lastUserMessage
+        const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
+        lastUserMessage = lastUser ? lastUser.content : null;
+        
+        saveCurrentArchive();
+        return true;
+    }
+
+    function deleteAssistantMessage(msgId) {
+        deleteMessageById(msgId, false);
+    }
+
     // ========== 消息渲染 ==========
     function addMessageToUI(role, content, msgId = null, customTime = null) {
         const div = document.createElement('div');
@@ -580,18 +602,17 @@
         
         div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${timestampHtml}</div>`;
         
-        if (role === 'user') {
-            let pressTimer;
-            div.addEventListener('touchstart', (e) => {
-                pressTimer = setTimeout(() => showContextMenu(e, div, finalId), 500);
-            });
-            div.addEventListener('touchend', () => clearTimeout(pressTimer));
-            div.addEventListener('touchmove', () => clearTimeout(pressTimer));
-            div.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                showContextMenu(e, div, finalId);
-            });
-        }
+        // 长按菜单 - 用户消息和 AI 消息都支持
+        let pressTimer;
+        div.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500);
+        });
+        div.addEventListener('touchend', () => clearTimeout(pressTimer));
+        div.addEventListener('touchmove', () => clearTimeout(pressTimer));
+        div.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            showContextMenu(e, div, finalId, role);
+        });
         
         chatMessagesDiv.appendChild(div);
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
@@ -606,8 +627,9 @@
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
 
-    function showContextMenu(event, element, msgId) {
+    function showContextMenu(event, element, msgId, role) {
         currentLongPressMsgId = msgId;
+        currentLongPressRole = role;
         let x, y;
         if (event.touches) {
             x = event.touches[0].clientX;
@@ -616,6 +638,16 @@
             x = event.clientX;
             y = event.clientY;
         }
+        
+        // 根据消息类型显示不同的菜单选项
+        if (role === 'user') {
+            recallMsgBtn.style.display = 'block';
+            deleteMsgBtn.textContent = '🗑 删除消息';
+        } else {
+            recallMsgBtn.style.display = 'none';
+            deleteMsgBtn.textContent = '🗑 删除 AI 消息';
+        }
+        
         contextMenu.style.display = 'block';
         contextMenu.style.left = x + 'px';
         contextMenu.style.top = y + 'px';
@@ -627,7 +659,8 @@
         document.removeEventListener('click', hideContextMenu);
     }
 
-    function recallMessage() {
+    // 撤回用户消息（显示撤回提示）
+    function recallUserMessage() {
         if (!currentLongPressMsgId) return;
         const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
         if (!targetMsg) return;
@@ -635,19 +668,35 @@
         const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
         if (index !== -1) {
             conversationHistory.splice(index, 1);
-            if (conversationHistory[index+1]?.role === 'assistant') {
+            // 如果后面紧跟的是 AI 回复，也一起删除
+            if (conversationHistory[index] && conversationHistory[index].role === 'assistant') {
+                const assistantMsg = document.querySelector(`[data-msg-id="${conversationHistory[index].id}"]`);
+                if (assistantMsg) assistantMsg.remove();
+                conversationHistory.splice(index, 1);
+            } else if (conversationHistory[index+1]?.role === 'assistant') {
+                const assistantMsg = document.querySelector(`[data-msg-id="${conversationHistory[index+1].id}"]`);
+                if (assistantMsg) assistantMsg.remove();
                 conversationHistory.splice(index+1, 1);
             }
         }
         targetMsg.remove();
         addRecallMessage();
         hideContextMenu();
+        
         const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
         lastUserMessage = lastUser ? lastUser.content : null;
-        saveCurrentArchive();  // 自动保存
+        saveCurrentArchive();
     }
 
-    recallMsgBtn.addEventListener('click', recallMessage);
+    // 删除任何消息（不显示提示）
+    function deleteAnyMessage() {
+        if (!currentLongPressMsgId) return;
+        deleteMessageById(currentLongPressMsgId, false);
+        hideContextMenu();
+    }
+
+    recallMsgBtn.addEventListener('click', recallUserMessage);
+    deleteMsgBtn.addEventListener('click', deleteAnyMessage);
 
     function renderFullHistory() {
         chatMessagesDiv.innerHTML = '';
@@ -655,7 +704,7 @@
             const welcome = document.createElement('div');
             welcome.className = 'message assistant-message';
             const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
-            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！我是 DeepSeek AI 💙<br>保存 API Key 后就可以开始对话~<br>长按自己的消息可撤回，点「隐藏时间」开关时间戳</div>${timestampHtml}</div>`;
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！我是 DeepSeek AI 💙<br>保存 API Key 后就可以开始对话~<br>长按任何消息可删除，长按自己的消息可撤回</div>${timestampHtml}</div>`;
             chatMessagesDiv.appendChild(welcome);
         } else {
             conversationHistory.forEach(msg => {
@@ -738,7 +787,7 @@
             isLoading = false;
             sendBtn.classList.remove('disabled');
             messageInput.focus();
-            saveCurrentArchive();  // 自动保存
+            saveCurrentArchive();
         }
     }
 
@@ -754,7 +803,7 @@
             conversationHistory = [];
             lastUserMessage = null;
             renderFullHistory();
-            saveCurrentArchive();  // 自动保存
+            saveCurrentArchive();
         }
     }
 
