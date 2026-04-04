@@ -12,7 +12,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 关键修复：让 body 可以滚动，地址栏才能收缩 */
+        /* 让页面可以滚动，地址栏能收缩 */
         html, body {
             height: 100%;
             overflow-y: auto;
@@ -24,7 +24,6 @@
             background: #f5f5f7;
             display: flex;
             justify-content: center;
-            min-height: 100vh;
         }
 
         .app-container {
@@ -33,11 +32,11 @@
             background: #ffffff;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;  /* 改为 min-height 让内容可以撑开 */
+            min-height: 100vh;
             position: relative;
         }
 
-        /* 顶部固定区域 - 不设置 sticky，让整体滚动 */
+        /* 顶部区域 - 正常块级，不固定 */
         .fixed-top {
             background: #ffffff;
             flex-shrink: 0;
@@ -193,17 +192,16 @@
             margin-left: 8px;
         }
 
-        /* 聊天区域 - 可滚动，让地址栏能够收缩 */
+        /* 聊天区域 - 弹性撑开 */
         .chat-messages {
             flex: 1;
-            overflow-y: visible;
             padding: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        /* 底部输入区域 - 不固定，随内容自然排列 */
+        /* 底部区域 */
         .bottom-area {
             flex-shrink: 0;
             background: #f5f5f7;
@@ -357,11 +355,15 @@
             animation: blink 1.4s infinite;
         }
         @keyframes blink { 0%,60%,100%{ opacity:0.3; } 30%{ opacity:1; } }
+
+        /* 新增：滚动时自动滚动到最新消息 */
+        .auto-scroll {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <!-- 顶部区域（不再使用 sticky，让整体页面滚动，地址栏才能收缩） -->
     <div class="fixed-top">
         <div class="chat-header">
             <div class="back-btn" onclick="history.back()">←</div>
@@ -397,10 +399,8 @@
         </div>
     </div>
 
-    <!-- 聊天区域 -->
     <div class="chat-messages" id="chatMessages"></div>
 
-    <!-- 底部输入区域 -->
     <div class="bottom-area">
         <div class="input-area">
             <div class="input-wrapper">
@@ -642,7 +642,10 @@
         });
         
         chatMessagesDiv.appendChild(div);
-        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        // 滚动到新消息
+        setTimeout(() => {
+            div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 50);
         return { id: finalId, element: div, time: timeStr };
     }
 
@@ -651,7 +654,9 @@
         recallDiv.className = 'message recall-message';
         recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`;
         chatMessagesDiv.appendChild(recallDiv);
-        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        setTimeout(() => {
+            recallDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 50);
     }
 
     function showContextMenu(event, element, msgId, role) {
@@ -736,7 +741,9 @@
                 }
             });
         }
-        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        setTimeout(() => {
+            chatMessagesDiv.lastChild?.scrollIntoView({ behavior: 'auto', block: 'end' });
+        }, 50);
     }
 
     // ========== API 调用 ==========
@@ -768,7 +775,9 @@
         const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
         typingDiv.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div>${timestampHtml}</div>`;
         chatMessagesDiv.appendChild(typingDiv);
-        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        setTimeout(() => {
+            typingDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 50);
     }
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
 
