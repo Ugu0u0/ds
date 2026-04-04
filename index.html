@@ -75,10 +75,28 @@
             cursor: pointer;
         }
 
-        /* 折叠面板容器 - 初始全部收起，只显示 💙 图标 */
-        .panels-container {
-            background: #ffffff;
-            transition: all 0.2s ease;
+        /* 主控 💙 图标 - 纯图标无文字无边框 */
+        .main-toggle {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: flex-start;
+        }
+        .main-toggle-icon {
+            font-size: 28px;
+            background: #007aff;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: transform 0.1s ease;
+        }
+        .main-toggle-icon:active {
+            transform: scale(0.95);
         }
 
         .collapse-panel {
@@ -119,7 +137,6 @@
             padding: 0;
         }
 
-        /* 存档栏内部 */
         .archive-bar {
             padding: 8px 12px;
             overflow-x: auto;
@@ -215,33 +232,6 @@
             font-size: 0.55rem;
             color: #007aff;
             margin-left: 8px;
-        }
-
-        /* 主控 💙 图标 */
-        .main-toggle {
-            background: none;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            border-bottom: 0.5px solid #e5e5ea;
-        }
-        .main-toggle-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: white;
-        }
-        .main-toggle-arrow {
-            font-size: 0.8rem;
-            color: white;
-            transition: transform 0.2s ease;
-        }
-        .main-toggle-arrow.collapsed {
-            transform: rotate(180deg);
         }
 
         .chat-messages {
@@ -445,18 +435,13 @@
             <div class="call-btn">📞</div>
         </div>
 
-        <!-- 主控 💙 图标：点击展开/收起所有面板 -->
+        <!-- 纯 💙 图标，无文字无边框 -->
         <div class="main-toggle" id="mainToggle">
-            <div class="main-toggle-left">
-                <span>💙</span>
-                <span style="font-size: 0.8rem;">AI 设置面板</span>
-            </div>
-            <span class="main-toggle-arrow" id="mainToggleArrow">▼</span>
+            <div class="main-toggle-icon">💙</div>
         </div>
 
         <!-- 三个折叠面板的容器 -->
         <div id="panelsContainer" style="display: none;">
-            <!-- 面板1：存档 & 备份 -->
             <div class="collapse-panel" id="archivePanel">
                 <div class="panel-header" id="archivePanelHeader">
                     <span class="panel-title">📂 对话存档 & 备份</span>
@@ -467,7 +452,6 @@
                 </div>
             </div>
 
-            <!-- 面板2：快捷操作 -->
             <div class="collapse-panel" id="actionPanel">
                 <div class="panel-header" id="actionPanelHeader">
                     <span class="panel-title">⚡ 快捷操作</span>
@@ -482,7 +466,6 @@
                 </div>
             </div>
 
-            <!-- 面板3：API 密钥 -->
             <div class="collapse-panel" id="apiPanel">
                 <div class="panel-header" id="apiPanelHeader">
                     <span class="panel-title">🔑 API 密钥设置</span>
@@ -534,25 +517,15 @@
 
 <script>
     // ========== 折叠面板控制 ==========
-    // 主控状态：true = 展开面板列表，false = 收起
     let mainExpanded = false;
-    // 每个子面板的展开状态
-    let subPanelStates = {
-        archivePanel: true,
-        actionPanel: true,
-        apiPanel: true
-    };
+    let subPanelStates = { archivePanel: true, actionPanel: true, apiPanel: true };
 
     const panelsContainer = document.getElementById('panelsContainer');
-    const mainToggleArrow = document.getElementById('mainToggleArrow');
 
-    // 切换主控（展开/收起所有面板）
     function toggleMain() {
         mainExpanded = !mainExpanded;
         if (mainExpanded) {
             panelsContainer.style.display = 'block';
-            mainToggleArrow.classList.remove('collapsed');
-            // 恢复子面板的展开状态
             for (let panelId in subPanelStates) {
                 const content = document.getElementById(panelId + 'Content');
                 const arrow = document.getElementById(panelId + 'Arrow');
@@ -571,66 +544,45 @@
             }
         } else {
             panelsContainer.style.display = 'none';
-            mainToggleArrow.classList.add('collapsed');
         }
-        // 保存状态
         localStorage.setItem('deepseek_main_expanded', mainExpanded);
     }
 
-    // 切换子面板
     function toggleSubPanel(panelId) {
-        if (!mainExpanded) return; // 主控没展开时不能操作子面板
+        if (!mainExpanded) return;
         const content = document.getElementById(panelId + 'Content');
         const arrow = document.getElementById(panelId + 'Arrow');
         if (!content || !arrow) return;
-        
         if (subPanelStates[panelId]) {
-            // 收起
             content.style.maxHeight = content.scrollHeight + 'px';
             setTimeout(() => content.style.maxHeight = '0', 10);
             subPanelStates[panelId] = false;
             arrow.classList.add('collapsed');
         } else {
-            // 展开
             content.style.maxHeight = content.scrollHeight + 'px';
             subPanelStates[panelId] = true;
             arrow.classList.remove('collapsed');
-            setTimeout(() => {
-                if (subPanelStates[panelId]) content.style.maxHeight = '';
-            }, 250);
+            setTimeout(() => { if (subPanelStates[panelId]) content.style.maxHeight = ''; }, 250);
         }
-        // 保存状态
         localStorage.setItem('deepseek_sub_panel_states', JSON.stringify(subPanelStates));
     }
 
-    // 加载保存的状态
     function loadPanelStatesFromStorage() {
         const savedMain = localStorage.getItem('deepseek_main_expanded');
         if (savedMain === 'true') {
             mainExpanded = true;
             panelsContainer.style.display = 'block';
-            mainToggleArrow.classList.remove('collapsed');
-        } else if (savedMain === 'false') {
-            mainExpanded = false;
-            panelsContainer.style.display = 'none';
-            mainToggleArrow.classList.add('collapsed');
         } else {
-            // 默认：收起（只显示 💙）
             mainExpanded = false;
             panelsContainer.style.display = 'none';
-            mainToggleArrow.classList.add('collapsed');
         }
-        
         const savedSub = localStorage.getItem('deepseek_sub_panel_states');
         if (savedSub) {
             try {
                 const states = JSON.parse(savedSub);
-                for (let key in states) {
-                    if (subPanelStates.hasOwnProperty(key)) subPanelStates[key] = states[key];
-                }
+                for (let key in states) if (subPanelStates.hasOwnProperty(key)) subPanelStates[key] = states[key];
             } catch(e) {}
         }
-        // 应用子面板状态
         for (let panelId in subPanelStates) {
             const content = document.getElementById(panelId + 'Content');
             const arrow = document.getElementById(panelId + 'Arrow');
@@ -651,54 +603,53 @@
         }
     }
 
-    // 绑定点击事件
     document.getElementById('mainToggle')?.addEventListener('click', toggleMain);
     document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
     document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
     document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
 
-    // ========== 记忆系统 ==========
-    let shortTermMemories = [];
-    let longTermVolumes = [];
-    let conversationCounter = 0;
-    let currentApiKey = '';
-    let isLoading = false;
-    let currentArchiveId = 'default';
-    let archives = {};
-    let showTimestamp = true;
-    let currentLongPressMsgId = null;
-    let currentLongPressRole = null;
-    let messageIdCounter = 0;
-    let conversationHistory = [];
-    let lastUserMessage = null;
+    // ========== 记忆系统（每个存档独立） ==========
+    // 数据结构：每个存档保存自己的记忆数据
+    // archives[archiveId].memory = { shortTerm: [], longTerm: [], conversationCounter: 0 }
 
-    function getCurrentTimeString() {
-        const now = new Date();
-        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    function getCurrentMemory() {
+        if (!archives[currentArchiveId]) {
+            archives[currentArchiveId] = { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
+        }
+        if (!archives[currentArchiveId].memory) {
+            archives[currentArchiveId].memory = { shortTerm: [], longTerm: [], conversationCounter: 0 };
+        }
+        return archives[currentArchiveId].memory;
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    function saveCurrentMemory() {
+        const memory = getCurrentMemory();
+        memory.shortTerm = shortTermMemories;
+        memory.longTerm = longTermVolumes;
+        memory.conversationCounter = conversationCounter;
+        saveArchivesToLocal();
     }
 
-    function genId() { return Date.now() + '-' + (messageIdCounter++); }
-
-    // 记忆系统函数
-    function loadMemoryFromLocal() {
-        const savedShort = localStorage.getItem('deepseek_short_memories');
-        const savedLong = localStorage.getItem('deepseek_long_volumes');
-        const savedCounter = localStorage.getItem('deepseek_conversation_counter');
-        if (savedShort) shortTermMemories = JSON.parse(savedShort);
-        if (savedLong) longTermVolumes = JSON.parse(savedLong);
-        if (savedCounter) conversationCounter = parseInt(savedCounter) || 0;
+    function loadMemoryForArchive(archiveId) {
+        const archive = archives[archiveId];
+        if (archive && archive.memory) {
+            shortTermMemories = archive.memory.shortTerm || [];
+            longTermVolumes = archive.memory.longTerm || [];
+            conversationCounter = archive.memory.conversationCounter || 0;
+        } else {
+            shortTermMemories = [];
+            longTermVolumes = [];
+            conversationCounter = 0;
+        }
         updateMemoryDisplay();
     }
 
+    let shortTermMemories = [];
+    let longTermVolumes = [];
+    let conversationCounter = 0;
+
     function saveMemoryToLocal() {
-        localStorage.setItem('deepseek_short_memories', JSON.stringify(shortTermMemories));
-        localStorage.setItem('deepseek_long_volumes', JSON.stringify(longTermVolumes));
-        localStorage.setItem('deepseek_conversation_counter', conversationCounter);
+        saveCurrentMemory();
     }
 
     async function summarizeToShortMemory(conversationText) {
@@ -811,6 +762,11 @@
         return context;
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+
     // ========== 备份/恢复 ==========
     function exportBackup() {
         const backupData = {
@@ -818,10 +774,7 @@
             date: new Date().toISOString(),
             archives: archives,
             currentArchiveId: currentArchiveId,
-            apiKey: localStorage.getItem('deepseek_api_key') || '',
-            shortTermMemories: shortTermMemories,
-            longTermVolumes: longTermVolumes,
-            conversationCounter: conversationCounter
+            apiKey: localStorage.getItem('deepseek_api_key') || ''
         };
         const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -830,7 +783,7 @@
         a.download = `deepseek_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        alert('✅ 备份已导出！包含所有记忆卷轴');
+        alert('✅ 备份已导出！包含所有存档和记忆');
     }
 
     function importBackup() {
@@ -847,18 +800,14 @@
                     archives = backup.archives;
                     currentArchiveId = backup.currentArchiveId || 'default';
                     if (backup.apiKey) localStorage.setItem('deepseek_api_key', backup.apiKey);
-                    if (backup.shortTermMemories) shortTermMemories = backup.shortTermMemories;
-                    if (backup.longTermVolumes) longTermVolumes = backup.longTermVolumes;
-                    if (backup.conversationCounter) conversationCounter = backup.conversationCounter;
-                    saveMemoryToLocal();
                     saveArchivesToLocal();
                     updateArchiveButtons();
-                    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null };
+                    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
                     conversationHistory = archive.history || [];
                     lastUserMessage = archive.lastUserMessage;
+                    loadMemoryForArchive(currentArchiveId);
                     renderFullHistory();
                     updateApiKeyUI();
-                    updateMemoryDisplay();
                     alert('✅ 恢复成功！');
                 } else alert('备份文件格式不正确');
             } catch(err) { alert('恢复失败：文件损坏'); }
@@ -867,6 +816,24 @@
     }
 
     // ========== 存档管理 ==========
+    let currentApiKey = '';
+    let isLoading = false;
+    let currentArchiveId = 'default';
+    let archives = {};
+    let showTimestamp = true;
+    let currentLongPressMsgId = null;
+    let currentLongPressRole = null;
+    let messageIdCounter = 0;
+    let conversationHistory = [];
+    let lastUserMessage = null;
+
+    function getCurrentTimeString() {
+        const now = new Date();
+        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    }
+
+    function genId() { return Date.now() + '-' + (messageIdCounter++); }
+
     function saveArchivesToLocal() {
         localStorage.setItem('deepseek_archives', JSON.stringify(archives));
         localStorage.setItem('deepseek_current_archive', currentArchiveId);
@@ -875,37 +842,58 @@
     function loadArchivesFromLocal() {
         const saved = localStorage.getItem('deepseek_archives');
         if (saved) archives = JSON.parse(saved);
-        else archives = { default: { history: [], lastUserMessage: null } };
+        else archives = { default: { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } } };
         const savedCurrent = localStorage.getItem('deepseek_current_archive');
         if (savedCurrent && archives[savedCurrent]) currentArchiveId = savedCurrent;
         else currentArchiveId = 'default';
     }
 
     function saveCurrentArchive() {
-        archives[currentArchiveId] = { history: JSON.parse(JSON.stringify(conversationHistory)), lastUserMessage: lastUserMessage };
+        archives[currentArchiveId] = {
+            history: JSON.parse(JSON.stringify(conversationHistory)),
+            lastUserMessage: lastUserMessage,
+            memory: { shortTerm: shortTermMemories, longTerm: longTermVolumes, conversationCounter: conversationCounter }
+        };
         saveArchivesToLocal();
     }
 
     function loadArchive(archiveId) {
-        if (!archives[archiveId]) archives[archiveId] = { history: [], lastUserMessage: null };
+        if (!archives[archiveId]) {
+            archives[archiveId] = { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
+        }
         currentArchiveId = archiveId;
         const archive = archives[archiveId];
         conversationHistory = archive.history ? JSON.parse(JSON.stringify(archive.history)) : [];
         lastUserMessage = archive.lastUserMessage;
+        // 加载该存档对应的记忆
+        if (archive.memory) {
+            shortTermMemories = archive.memory.shortTerm || [];
+            longTermVolumes = archive.memory.longTerm || [];
+            conversationCounter = archive.memory.conversationCounter || 0;
+        } else {
+            shortTermMemories = [];
+            longTermVolumes = [];
+            conversationCounter = 0;
+        }
         saveArchivesToLocal();
         renderFullHistory();
         updateArchiveButtons();
+        updateMemoryDisplay();
     }
 
     function createNewArchive() {
         const newId = '存档_' + new Date().toLocaleTimeString().replace(/:/g, '-');
-        archives[newId] = { history: [], lastUserMessage: null };
+        archives[newId] = { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
         currentArchiveId = newId;
         conversationHistory = [];
         lastUserMessage = null;
+        shortTermMemories = [];
+        longTermVolumes = [];
+        conversationCounter = 0;
         saveArchivesToLocal();
         renderFullHistory();
         updateArchiveButtons();
+        updateMemoryDisplay();
     }
 
     function deleteArchive(archiveId) {
@@ -914,9 +902,20 @@
             delete archives[archiveId];
             if (currentArchiveId === archiveId) {
                 currentArchiveId = 'default';
-                conversationHistory = archives.default.history || [];
-                lastUserMessage = archives.default.lastUserMessage;
+                const defaultArchive = archives.default;
+                conversationHistory = defaultArchive.history || [];
+                lastUserMessage = defaultArchive.lastUserMessage;
+                if (defaultArchive.memory) {
+                    shortTermMemories = defaultArchive.memory.shortTerm || [];
+                    longTermVolumes = defaultArchive.memory.longTerm || [];
+                    conversationCounter = defaultArchive.memory.conversationCounter || 0;
+                } else {
+                    shortTermMemories = [];
+                    longTermVolumes = [];
+                    conversationCounter = 0;
+                }
                 renderFullHistory();
+                updateMemoryDisplay();
             }
             saveArchivesToLocal();
             updateArchiveButtons();
@@ -1052,7 +1051,7 @@
             const welcome = document.createElement('div');
             welcome.className = 'message assistant-message';
             const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
-            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>我会记住我们的对话，每15轮总结一次记忆</div>${timestampHtml}</div>`;
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>每个存档的记忆是独立的，互不干扰<br>我会记住我们的对话，每15轮总结一次记忆</div>${timestampHtml}</div>`;
             chatDiv.appendChild(welcome);
         } else {
             conversationHistory.forEach(msg => { if (msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
@@ -1063,7 +1062,7 @@
     async function callDeepSeek(userMsg) {
         if (!currentApiKey) throw new Error('请先保存 API Key');
         const memoryContext = getMemoryContext();
-        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。` : '请用自然友好的方式和我聊天。';
+        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复，保持一致性：\n${memoryContext}\n\n现在请继续我们的对话。` : '请用自然友好的方式和我聊天。';
         const messages = [
             { role: 'system', content: systemPrompt },
             ...conversationHistory.filter(m => m.role !== 'system').slice(-25),
@@ -1175,7 +1174,6 @@
 
     function clearApiKey() { localStorage.removeItem('deepseek_api_key'); currentApiKey = ''; updateApiKeyUI(); document.getElementById('apiKeyInput').value = ''; }
 
-    // 绑定事件
     document.getElementById('saveKeyBtn')?.addEventListener('click', saveApiKey);
     document.getElementById('clearKeyBtn')?.addEventListener('click', clearApiKey);
     document.getElementById('sendBtn')?.addEventListener('click', () => sendMessage());
@@ -1187,10 +1185,9 @@
     function autoResize() { const input = document.getElementById('messageInput'); input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 80) + 'px'; }
     document.getElementById('messageInput')?.addEventListener('input', autoResize);
 
-    // 初始化
     loadArchivesFromLocal();
-    loadMemoryFromLocal();
-    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null };
+    loadMemoryForArchive(currentArchiveId);
+    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
     conversationHistory = archive.history || [];
     lastUserMessage = archive.lastUserMessage;
     updateArchiveButtons();
