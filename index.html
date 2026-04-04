@@ -31,12 +31,10 @@
         }
 
         .fixed-top {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: #ffffff;
-            flex-shrink: 0;
-        }
+    position: relative;  /* 改为 relative，不再 sticky */
+    background: #ffffff;
+    flex-shrink: 0;
+}
 
         .chat-header {
             background: #f5f5f7;
@@ -80,7 +78,7 @@
             display: flex;
             justify-content: flex-end;
             padding: 8px 16px 8px 16px;
-            background: #ffffff;
+            background: transparent;
         }
         .main-toggle {
             cursor: pointer;
@@ -97,10 +95,16 @@
 
         /* 面板容器 - 包裹三个折叠栏，默认收起 */
         .panels-wrapper {
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background: #ffffff;
-        }
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: #ffffff;
+    position: absolute;  /* 新增：脱离文档流 */
+    left: 0;
+    right: 0;
+    top: 100%;  /* 紧贴 💙 下方 */
+    z-index: 99;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
         .panels-wrapper.collapsed {
             max-height: 0 !important;
         }
