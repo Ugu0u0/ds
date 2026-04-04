@@ -31,12 +31,13 @@
         }
 
         .fixed-top {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: #ffffff;
-            flex-shrink: 0;
-        }
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    flex-shrink: 0;
+    border-bottom: none;  /* 新增这行 */
+}
 
         .chat-header {
             background: #f5f5f7;
@@ -545,23 +546,35 @@
     }
 
     function toggleSubPanel(panelId) {
-        if (!mainExpanded) return;
-        const content = document.getElementById(panelId + 'Content');
-        const arrow = document.getElementById(panelId + 'Arrow');
-        if (!content || !arrow) return;
-        if (subPanelStates[panelId]) {
-            content.style.maxHeight = content.scrollHeight + 'px';
-            setTimeout(() => content.style.maxHeight = '0', 10);
-            subPanelStates[panelId] = false;
-            arrow.classList.add('collapsed');
-        } else {
-            content.style.maxHeight = content.scrollHeight + 'px';
-            subPanelStates[panelId] = true;
-            arrow.classList.remove('collapsed');
-            setTimeout(() => { if (subPanelStates[panelId]) content.style.maxHeight = ''; }, 250);
-        }
-        localStorage.setItem('deepseek_sub_panel_states', JSON.stringify(subPanelStates));
+    if (!mainExpanded) return;
+    const content = document.getElementById(panelId + 'Content');
+    const arrow = document.getElementById(panelId + 'Arrow');
+    if (!content || !arrow) return;
+    
+    if (subPanelStates[panelId]) {
+        // 收起
+        content.style.maxHeight = content.scrollHeight + 'px';
+        setTimeout(() => {
+            content.style.maxHeight = '0';
+            content.classList.add('collapsed');
+        }, 10);
+        subPanelStates[panelId] = false;
+        arrow.classList.add('collapsed');
+    } else {
+        // 展开
+        content.classList.remove('collapsed');
+        // 先设置一个足够大的值，等过渡完成后再清除
+        content.style.maxHeight = content.scrollHeight + 'px';
+        subPanelStates[panelId] = true;
+        arrow.classList.remove('collapsed');
+        setTimeout(() => {
+            if (subPanelStates[panelId]) {
+                content.style.maxHeight = '';
+            }
+        }, 300);
     }
+    localStorage.setItem('deepseek_sub_panel_states', JSON.stringify(subPanelStates));
+}
 
     function loadPanelStatesFromStorage() {
         const savedMain = localStorage.getItem('deepseek_main_expanded');
