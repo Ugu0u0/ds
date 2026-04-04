@@ -441,85 +441,59 @@
         </div>
 
         <!-- 💙 图标行：右上角，无白条 -->
-        <div class="toggle-row">
-            <div class="main-toggle" id="mainToggle">
-                <span class="main-toggle-icon">💙</span>
-            </div>
+        <!-- 面板容器（放在上面） -->
+<div id="panelsWrapper" class="panels-wrapper collapsed">
+    <div class="collapse-panel" id="archivePanel">
+        <div class="panel-header" id="archivePanelHeader">
+            <span class="panel-title">📂 对话存档 & 备份</span>
+            <span class="panel-arrow" id="archivePanelArrow">▼</span>
         </div>
+        <div class="panel-content" id="archivePanelContent">
+            <div class="archive-bar" id="archiveBar"></div>
+        </div>
+    </div>
 
-        <!-- 面板容器 - 三个折叠栏，默认收起 -->
-        <div id="panelsWrapper" class="panels-wrapper collapsed">
-            <div class="collapse-panel" id="archivePanel">
-                <div class="panel-header" id="archivePanelHeader">
-                    <span class="panel-title">📂 对话存档 & 备份</span>
-                    <span class="panel-arrow" id="archivePanelArrow">▼</span>
-                </div>
-                <div class="panel-content" id="archivePanelContent">
-                    <div class="archive-bar" id="archiveBar"></div>
-                </div>
-            </div>
-
-            <div class="collapse-panel" id="actionPanel">
-                <div class="panel-header" id="actionPanelHeader">
-                    <span class="panel-title">⚡ 快捷操作</span>
-                    <span class="panel-arrow" id="actionPanelArrow">▼</span>
-                </div>
-                <div class="panel-content" id="actionPanelContent">
-                    <div class="action-bar">
-                        <button class="action-btn" id="regenerateBtn">🔄 重说</button>
-                        <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
-                        <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="collapse-panel" id="apiPanel">
-                <div class="panel-header" id="apiPanelHeader">
-                    <span class="panel-title">🔑 API 密钥设置</span>
-                    <span class="panel-arrow" id="apiPanelArrow">▼</span>
-                </div>
-                <div class="panel-content" id="apiPanelContent">
-                    <div class="api-section">
-                        <div class="api-input-group">
-                            <label>🔑 API Key</label>
-                            <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx">
-                            <button class="save-key-btn" id="saveKeyBtn">保存</button>
-                        </div>
-                        <div class="status-badge">
-                            <span class="status-dot" id="statusDot"></span>
-                            <span id="statusText">未配置密钥</span>
-                            <button class="clear-btn" id="clearKeyBtn">清除</button>
-                        </div>
-                    </div>
-                </div>
+    <div class="collapse-panel" id="actionPanel">
+        <div class="panel-header" id="actionPanelHeader">
+            <span class="panel-title">⚡ 快捷操作</span>
+            <span class="panel-arrow" id="actionPanelArrow">▼</span>
+        </div>
+        <div class="panel-content" id="actionPanelContent">
+            <div class="action-bar">
+                <button class="action-btn" id="regenerateBtn">🔄 重说</button>
+                <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
+                <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
             </div>
         </div>
     </div>
 
-    <div id="memoryScrollArea" class="memory-scroll" style="display: none;">
-        <div class="memory-header">
-            <span class="memory-title">📜 记忆卷轴</span>
-            <button class="memory-refresh" id="refreshMemoryBtn">🔄 整理</button>
+    <div class="collapse-panel" id="apiPanel">
+        <div class="panel-header" id="apiPanelHeader">
+            <span class="panel-title">🔑 API 密钥设置</span>
+            <span class="panel-arrow" id="apiPanelArrow">▼</span>
         </div>
-        <div class="memory-content" id="memoryContent">加载中...</div>
-        <div class="short-memory-badge" id="shortMemoryBadge"></div>
-    </div>
-
-    <div class="chat-messages" id="chatMessages"></div>
-
-    <div class="fixed-bottom">
-        <div class="input-area">
-            <div class="input-wrapper">
-                <textarea id="messageInput" rows="1" placeholder="iMessage 输入..."></textarea>
+        <div class="panel-content" id="apiPanelContent">
+            <div class="api-section">
+                <div class="api-input-group">
+                    <label>🔑 API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx">
+                    <button class="save-key-btn" id="saveKeyBtn">保存</button>
+                </div>
+                <div class="status-badge">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">未配置密钥</span>
+                    <button class="clear-btn" id="clearKeyBtn">清除</button>
+                </div>
             </div>
-            <button id="sendBtn">➤</button>
         </div>
     </div>
 </div>
 
-<div id="contextMenu" class="context-menu">
-    <button id="recallMsgBtn">💬 撤回这条消息</button>
-    <button id="deleteMsgBtn">🗑 删除消息</button>
+<!-- 💙 图标行（放在下面） -->
+<div class="toggle-row">
+    <div class="main-toggle" id="mainToggle">
+        <span class="main-toggle-icon">💙</span>
+    </div>
 </div>
 
 <script>
