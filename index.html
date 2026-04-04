@@ -93,6 +93,7 @@
             color: #007aff;
             cursor: pointer;
             display: inline-block;
+            transition: 0.1s ease;
         }
         .archive-btn.active {
             background: #007aff;
@@ -513,17 +514,47 @@
             alert('默认存档不能删除');
             return;
         }
-        if (confirm(`删除存档「${archiveId}」？`)) {
+        if (confirm(`确定删除存档「${archiveId}」吗？\n删除后无法恢复！`)) {
             delete archives[archiveId];
             if (currentArchiveId === archiveId) {
                 currentArchiveId = 'default';
                 conversationHistory = archives.default.history || [];
                 lastUserMessage = archives.default.lastUserMessage;
+                renderFullHistory();
             }
             saveArchivesToLocal();
-            renderFullHistory();
             updateArchiveButtons();
         }
+    }
+
+    // 为存档按钮添加长按删除功能（手机专用）
+    function addLongPressDeleteToButton(btn, archiveId) {
+        let pressTimer;
+        
+        const startPress = (e) => {
+            // 阻止默认行为（防止选中文字或触发浏览器菜单）
+            e.preventDefault();
+            pressTimer = setTimeout(() => {
+                deleteArchive(archiveId);
+            }, 500);
+        };
+        
+        const cancelPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        };
+        
+        btn.addEventListener('touchstart', startPress, { passive: false });
+        btn.addEventListener('touchend', cancelPress);
+        btn.addEventListener('touchmove', cancelPress);
+        btn.addEventListener('touchcancel', cancelPress);
+        
+        // 鼠标事件（用于调试/桌面端）
+        btn.addEventListener('mousedown', startPress);
+        btn.addEventListener('mouseup', cancelPress);
+        btn.addEventListener('mouseleave', cancelPress);
     }
 
     function updateArchiveButtons() {
@@ -542,14 +573,14 @@
             btn.onclick = (function(archiveId) {
                 return function() { loadArchive(archiveId); };
             })(id);
+            
+            // 为非默认存档添加长按删除功能
             if (id !== 'default') {
-                btn.oncontextmenu = (function(archiveId) {
-                    return function(e) {
-                        e.preventDefault();
-                        deleteArchive(archiveId);
-                    };
-                })(id);
+                addLongPressDeleteToButton(btn, id);
+                // 添加一个视觉提示：长按时轻微震动感（通过CSS）
+                btn.style.transition = 'transform 0.05s';
             }
+            
             archiveBar.appendChild(btn);
         }
         const tipSpan = document.createElement('span');
@@ -569,20 +600,15 @@
         }
         targetMsg.remove();
         
-        if (showRecallTip && conversationHistory[index]?.role === 'user') {
+        if (showRecallTip) {
             addRecallMessage();
         }
         
-        // 更新 lastUserMessage
         const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
         lastUserMessage = lastUser ? lastUser.content : null;
         
         saveCurrentArchive();
         return true;
-    }
-
-    function deleteAssistantMessage(msgId) {
-        deleteMessageById(msgId, false);
     }
 
     // ========== 消息渲染 ==========
@@ -602,7 +628,7 @@
         
         div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${timestampHtml}</div>`;
         
-        // 长按菜单 - 用户消息和 AI 消息都支持
+        // 长按菜单
         let pressTimer;
         div.addEventListener('touchstart', (e) => {
             pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500);
@@ -639,7 +665,6 @@
             y = event.clientY;
         }
         
-        // 根据消息类型显示不同的菜单选项
         if (role === 'user') {
             recallMsgBtn.style.display = 'block';
             deleteMsgBtn.textContent = '🗑 删除消息';
@@ -659,7 +684,6 @@
         document.removeEventListener('click', hideContextMenu);
     }
 
-    // 撤回用户消息（显示撤回提示）
     function recallUserMessage() {
         if (!currentLongPressMsgId) return;
         const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
@@ -668,7 +692,6 @@
         const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
         if (index !== -1) {
             conversationHistory.splice(index, 1);
-            // 如果后面紧跟的是 AI 回复，也一起删除
             if (conversationHistory[index] && conversationHistory[index].role === 'assistant') {
                 const assistantMsg = document.querySelector(`[data-msg-id="${conversationHistory[index].id}"]`);
                 if (assistantMsg) assistantMsg.remove();
@@ -688,7 +711,6 @@
         saveCurrentArchive();
     }
 
-    // 删除任何消息（不显示提示）
     function deleteAnyMessage() {
         if (!currentLongPressMsgId) return;
         deleteMessageById(currentLongPressMsgId, false);
@@ -704,7 +726,7 @@
             const welcome = document.createElement('div');
             welcome.className = 'message assistant-message';
             const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
-            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！我是 DeepSeek AI 💙<br>保存 API Key 后就可以开始对话~<br>长按任何消息可删除，长按自己的消息可撤回</div>${timestampHtml}</div>`;
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！我是 DeepSeek AI 💙<br>保存 API Key 后就可以开始对话~<br>长按任何消息可删除，长按自己的消息可撤回<br>长按存档名可删除存档</div>${timestampHtml}</div>`;
             chatMessagesDiv.appendChild(welcome);
         } else {
             conversationHistory.forEach(msg => {
