@@ -31,13 +31,12 @@
         }
 
         .fixed-top {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: #ffffff;
-    flex-shrink: 0;
-    border-bottom: none;  /* 新增这行 */
-}
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
 
         .chat-header {
             background: #f5f5f7;
@@ -76,26 +75,14 @@
             cursor: pointer;
         }
 
-        /* 主控 💙 图标 - 纯图标无文字无边框 */
-        .main-toggle {
-    padding: 0;
-    cursor: pointer;
-    display: flex;
-    justify-content: flex-end;
-    margin-top: -8px;  /* 新增这行，往上移动 */
-}
-.main-toggle-icon {
-    font-size: 24px;
-    background: transparent;
-    width: auto;
-    height: auto;
-    display: inline-block;
-    color: #007aff;
-    transition: transform 0.1s ease;
-}
-.main-toggle-icon:active {
-    transform: scale(0.9);
-}
+        /* 面板容器 - 包裹三个折叠栏 */
+        .panels-wrapper {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .panels-wrapper.collapsed {
+            max-height: 0 !important;
+        }
 
         .collapse-panel {
             border-bottom: 0.5px solid #e5e5ea;
@@ -419,6 +406,25 @@
         }
         .memory-content { line-height: 1.4; }
         .short-memory-badge { font-size: 0.55rem; color: #8e8e93; margin-top: 4px; }
+
+        /* 💙 图标样式 - 放在底部 */
+        .main-toggle {
+            padding: 8px 16px 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            border-top: 0.5px solid #e5e5ea;
+            background: #ffffff;
+        }
+        .main-toggle-icon {
+            font-size: 26px;
+            background: transparent;
+            color: #007aff;
+            transition: transform 0.1s ease;
+        }
+        .main-toggle-icon:active {
+            transform: scale(0.9);
+        }
     </style>
 </head>
 <body>
@@ -433,13 +439,8 @@
             <div class="call-btn">📞</div>
         </div>
 
-        <!-- 纯 💙 图标，无文字无边框 -->
-        <div class="main-toggle" id="mainToggle">
-            <div class="main-toggle-icon">💙</div>
-        </div>
-
-        <!-- 三个折叠面板的容器 -->
-        <div id="panelsContainer" style="display: none;">
+        <!-- 面板容器 - 三个折叠栏放在这里，默认收起 -->
+        <div id="panelsWrapper" class="panels-wrapper collapsed">
             <div class="collapse-panel" id="archivePanel">
                 <div class="panel-header" id="archivePanelHeader">
                     <span class="panel-title">📂 对话存档 & 备份</span>
@@ -485,6 +486,11 @@
                 </div>
             </div>
         </div>
+
+        <!-- 💙 图标放在面板容器下面 -->
+        <div class="main-toggle" id="mainToggle">
+            <div class="main-toggle-icon">💙</div>
+        </div>
     </div>
 
     <div id="memoryScrollArea" class="memory-scroll" style="display: none;">
@@ -518,73 +524,80 @@
     let mainExpanded = false;
     let subPanelStates = { archivePanel: true, actionPanel: true, apiPanel: true };
 
-    const panelsContainer = document.getElementById('panelsContainer');
+    const panelsWrapper = document.getElementById('panelsWrapper');
 
+    // 设置面板容器的高度
+    function setPanelsHeight() {
+        if (mainExpanded) {
+            // 展开时，高度设置为 scrollHeight
+            panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
+        } else {
+            panelsWrapper.style.maxHeight = '0';
+        }
+    }
+
+    // 切换主控（展开/收起所有面板）
     function toggleMain() {
         mainExpanded = !mainExpanded;
         if (mainExpanded) {
-            panelsContainer.style.display = 'block';
-            for (let panelId in subPanelStates) {
-                const content = document.getElementById(panelId + 'Content');
-                const arrow = document.getElementById(panelId + 'Arrow');
-                if (content && arrow) {
-                    if (subPanelStates[panelId]) {
-                        content.classList.remove('collapsed');
-                        arrow.classList.remove('collapsed');
-                        content.style.maxHeight = content.scrollHeight + 'px';
-                        setTimeout(() => content.style.maxHeight = '', 250);
-                    } else {
-                        content.classList.add('collapsed');
-                        arrow.classList.add('collapsed');
-                        content.style.maxHeight = '0';
-                    }
-                }
-            }
+            panelsWrapper.classList.remove('collapsed');
+            setPanelsHeight();
         } else {
-            panelsContainer.style.display = 'none';
+            panelsWrapper.classList.add('collapsed');
+            panelsWrapper.style.maxHeight = '0';
         }
         localStorage.setItem('deepseek_main_expanded', mainExpanded);
     }
 
+    // 切换子面板
     function toggleSubPanel(panelId) {
-    if (!mainExpanded) return;
-    const content = document.getElementById(panelId + 'Content');
-    const arrow = document.getElementById(panelId + 'Arrow');
-    if (!content || !arrow) return;
-    
-    if (subPanelStates[panelId]) {
-        // 收起
-        content.style.maxHeight = content.scrollHeight + 'px';
+        if (!mainExpanded) return;
+        const content = document.getElementById(panelId + 'Content');
+        const arrow = document.getElementById(panelId + 'Arrow');
+        if (!content || !arrow) return;
+        
+        if (subPanelStates[panelId]) {
+            // 收起
+            content.style.maxHeight = content.scrollHeight + 'px';
+            setTimeout(() => {
+                content.style.maxHeight = '0';
+                content.classList.add('collapsed');
+            }, 10);
+            subPanelStates[panelId] = false;
+            arrow.classList.add('collapsed');
+        } else {
+            // 展开
+            content.classList.remove('collapsed');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            subPanelStates[panelId] = true;
+            arrow.classList.remove('collapsed');
+            setTimeout(() => {
+                if (subPanelStates[panelId]) {
+                    content.style.maxHeight = '';
+                }
+            }, 300);
+        }
+        // 更新主容器高度
         setTimeout(() => {
-            content.style.maxHeight = '0';
-            content.classList.add('collapsed');
-        }, 10);
-        subPanelStates[panelId] = false;
-        arrow.classList.add('collapsed');
-    } else {
-        // 展开
-        content.classList.remove('collapsed');
-        // 先设置一个足够大的值，等过渡完成后再清除
-        content.style.maxHeight = content.scrollHeight + 'px';
-        subPanelStates[panelId] = true;
-        arrow.classList.remove('collapsed');
-        setTimeout(() => {
-            if (subPanelStates[panelId]) {
-                content.style.maxHeight = '';
+            if (mainExpanded) {
+                panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
             }
-        }, 300);
+        }, 50);
+        localStorage.setItem('deepseek_sub_panel_states', JSON.stringify(subPanelStates));
     }
-    localStorage.setItem('deepseek_sub_panel_states', JSON.stringify(subPanelStates));
-}
 
     function loadPanelStatesFromStorage() {
         const savedMain = localStorage.getItem('deepseek_main_expanded');
         if (savedMain === 'true') {
             mainExpanded = true;
-            panelsContainer.style.display = 'block';
+            panelsWrapper.classList.remove('collapsed');
+            setTimeout(() => {
+                panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
+            }, 10);
         } else {
             mainExpanded = false;
-            panelsContainer.style.display = 'none';
+            panelsWrapper.classList.add('collapsed');
+            panelsWrapper.style.maxHeight = '0';
         }
         const savedSub = localStorage.getItem('deepseek_sub_panel_states');
         if (savedSub) {
@@ -619,8 +632,31 @@
     document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
 
     // ========== 记忆系统（每个存档独立） ==========
-    // 数据结构：每个存档保存自己的记忆数据
-    // archives[archiveId].memory = { shortTerm: [], longTerm: [], conversationCounter: 0 }
+    let currentApiKey = '';
+    let isLoading = false;
+    let currentArchiveId = 'default';
+    let archives = {};
+    let showTimestamp = true;
+    let currentLongPressMsgId = null;
+    let currentLongPressRole = null;
+    let messageIdCounter = 0;
+    let conversationHistory = [];
+    let lastUserMessage = null;
+    let shortTermMemories = [];
+    let longTermVolumes = [];
+    let conversationCounter = 0;
+
+    function getCurrentTimeString() {
+        const now = new Date();
+        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+
+    function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
     function getCurrentMemory() {
         if (!archives[currentArchiveId]) {
@@ -654,10 +690,6 @@
         updateMemoryDisplay();
     }
 
-    let shortTermMemories = [];
-    let longTermVolumes = [];
-    let conversationCounter = 0;
-
     function saveMemoryToLocal() {
         saveCurrentMemory();
     }
@@ -671,7 +703,7 @@
                 body: JSON.stringify({
                     model: 'deepseek-chat',
                     messages: [
-                        { role: 'system', content: '请用一句话总结以下对话中值得记住的重要信息（用户的喜好、性格、重要事件、约定等）。只输出总结内容，不要输出其他废话。如果没什么重要的，输出"无明显重要信息"。' },
+                        { role: 'system', content: '请用一句话总结以下对话中值得记住的重要信息。只输出总结内容，不要输出其他废话。如果没什么重要的，输出"无明显重要信息"。' },
                         { role: 'user', content: conversationText }
                     ],
                     temperature: 0.5,
@@ -703,7 +735,7 @@
                 body: JSON.stringify({
                     model: 'deepseek-chat',
                     messages: [
-                        { role: 'system', content: '请将以下多条记忆整合成一段连贯的长期记忆，保留所有重要信息，按时间顺序组织。只输出整合后的内容。' },
+                        { role: 'system', content: '请将以下多条记忆整合成一段连贯的长期记忆，保留所有重要信息。只输出整合后的内容。' },
                         { role: 'user', content: memoryText }
                     ],
                     temperature: 0.5,
@@ -772,11 +804,6 @@
         return context;
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-    }
-
     // ========== 备份/恢复 ==========
     function exportBackup() {
         const backupData = {
@@ -826,24 +853,6 @@
     }
 
     // ========== 存档管理 ==========
-    let currentApiKey = '';
-    let isLoading = false;
-    let currentArchiveId = 'default';
-    let archives = {};
-    let showTimestamp = true;
-    let currentLongPressMsgId = null;
-    let currentLongPressRole = null;
-    let messageIdCounter = 0;
-    let conversationHistory = [];
-    let lastUserMessage = null;
-
-    function getCurrentTimeString() {
-        const now = new Date();
-        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    }
-
-    function genId() { return Date.now() + '-' + (messageIdCounter++); }
-
     function saveArchivesToLocal() {
         localStorage.setItem('deepseek_archives', JSON.stringify(archives));
         localStorage.setItem('deepseek_current_archive', currentArchiveId);
@@ -875,16 +884,7 @@
         const archive = archives[archiveId];
         conversationHistory = archive.history ? JSON.parse(JSON.stringify(archive.history)) : [];
         lastUserMessage = archive.lastUserMessage;
-        // 加载该存档对应的记忆
-        if (archive.memory) {
-            shortTermMemories = archive.memory.shortTerm || [];
-            longTermVolumes = archive.memory.longTerm || [];
-            conversationCounter = archive.memory.conversationCounter || 0;
-        } else {
-            shortTermMemories = [];
-            longTermVolumes = [];
-            conversationCounter = 0;
-        }
+        loadMemoryForArchive(currentArchiveId);
         saveArchivesToLocal();
         renderFullHistory();
         updateArchiveButtons();
@@ -915,15 +915,7 @@
                 const defaultArchive = archives.default;
                 conversationHistory = defaultArchive.history || [];
                 lastUserMessage = defaultArchive.lastUserMessage;
-                if (defaultArchive.memory) {
-                    shortTermMemories = defaultArchive.memory.shortTerm || [];
-                    longTermVolumes = defaultArchive.memory.longTerm || [];
-                    conversationCounter = defaultArchive.memory.conversationCounter || 0;
-                } else {
-                    shortTermMemories = [];
-                    longTermVolumes = [];
-                    conversationCounter = 0;
-                }
+                loadMemoryForArchive('default');
                 renderFullHistory();
                 updateMemoryDisplay();
             }
@@ -1072,7 +1064,7 @@
     async function callDeepSeek(userMsg) {
         if (!currentApiKey) throw new Error('请先保存 API Key');
         const memoryContext = getMemoryContext();
-        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复，保持一致性：\n${memoryContext}\n\n现在请继续我们的对话。` : '请用自然友好的方式和我聊天。';
+        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。` : '请用自然友好的方式和我聊天。';
         const messages = [
             { role: 'system', content: systemPrompt },
             ...conversationHistory.filter(m => m.role !== 'system').slice(-25),
