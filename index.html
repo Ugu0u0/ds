@@ -388,8 +388,8 @@
         
         // 头像区域：支持图片或表情，这里用表情演示，如需图片可替换
         const avatarHtml = role === 'user' 
-            ? '<div class="avatar"><img src="Q小狐柚.png"alt="我"></div>'   // 改成 <img src="xxx"> 即可
-            : '<div class="avatar"><img src="d老师111.jpeg"alt="AI"></div>';
+            ? '<div class="avatar"><img src="Q小狐柚.png"></div>'   // 改成 <img src="xxx"> 即可
+            : '<div class="avatar"><img src="d老师111.jpeg"></div>';
         
         div.innerHTML = `${avatarHtml}<div class="bubble">${escapeHtml(content)}</div>`;
         
