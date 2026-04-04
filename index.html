@@ -87,7 +87,52 @@
             cursor: pointer;
         }
         .action-btn:active { background: #d1d1d6; }
-        .action-btn.active { background: #007aff; color: white; }
+
+        /* 存档栏 - 独立显眼区域 */
+        .archive-section {
+            background: #f0f0f4;
+            padding: 8px 12px;
+            border-bottom: 0.5px solid #d9d9de;
+            flex-shrink: 0;
+        }
+        .archive-label {
+            font-size: 0.65rem;
+            color: #6c6c70;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .archive-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .archive-btn {
+            background: white;
+            border: 0.5px solid #c6c6c8;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 0.7rem;
+            color: #007aff;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .archive-btn.active {
+            background: #007aff;
+            color: white;
+            border-color: #007aff;
+        }
+        .new-archive-btn {
+            background: #34c759;
+            border-color: #34c759;
+            color: white;
+        }
+        .delete-hint {
+            font-size: 0.55rem;
+            color: #8e8e93;
+        }
 
         .api-section {
             padding: 10px 16px;
@@ -150,35 +195,6 @@
             margin-left: 12px;
         }
 
-        /* 存档选择栏 */
-        .archive-bar {
-            padding: 6px 16px;
-            background: #f5f5f7;
-            display: flex;
-            gap: 8px;
-            border-bottom: 0.5px solid #e5e5ea;
-            flex-shrink: 0;
-            overflow-x: auto;
-        }
-        .archive-btn {
-            background: #e9e9ef;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 0.7rem;
-            color: #007aff;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .archive-btn.active {
-            background: #007aff;
-            color: white;
-        }
-        .new-archive-btn {
-            background: #34c759;
-            color: white;
-        }
-
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -198,7 +214,6 @@
         .user-message { align-self: flex-end; flex-direction: row-reverse; }
         .assistant-message { align-self: flex-start; }
         
-        /* 带时间的消息布局 */
         .message-content {
             display: flex;
             flex-direction: column;
@@ -357,12 +372,18 @@
     <div class="action-bar">
         <button class="action-btn" id="regenerateBtn">🔄 重说</button>
         <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
-        <button class="action-btn" id="toggleTimestampBtn" class="active">🕐 隐藏时间</button>
+        <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
     </div>
 
-    <!-- 存档栏 -->
-    <div class="archive-bar" id="archiveBar">
-        <button class="new-archive-btn archive-btn" id="newArchiveBtn">+ 新存档</button>
+    <!-- 存档区域 - 现在清晰可见 -->
+    <div class="archive-section">
+        <div class="archive-label">
+            <span>📂 对话存档</span>
+            <span class="delete-hint">💡 长按存档名可删除</span>
+        </div>
+        <div class="archive-buttons" id="archiveButtons">
+            <button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button>
+        </div>
     </div>
 
     <div class="api-section">
@@ -407,17 +428,19 @@
     const toggleTimestampBtn = document.getElementById('toggleTimestampBtn');
     const contextMenu = document.getElementById('contextMenu');
     const recallMsgBtn = document.getElementById('recallMsgBtn');
-    const archiveBar = document.getElementById('archiveBar');
+    const archiveButtonsDiv = document.getElementById('archiveButtons');
     const newArchiveBtn = document.getElementById('newArchiveBtn');
 
     // ========== 全局变量 ==========
     let currentApiKey = '';
     let isLoading = false;
     let currentArchiveId = 'default';
-    let archives = {};        // { archiveId: { history: [], lastUserMessage: null } }
-    let showTimestamp = true; // 默认显示时间
+    let archives = {};
+    let showTimestamp = true;
     let currentLongPressMsgId = null;
     let messageIdCounter = 0;
+    let conversationHistory = [];
+    let lastUserMessage = null;
 
     // ========== 辅助函数 ==========
     function getCurrentTimeString() {
@@ -448,9 +471,7 @@
         if (saved) {
             archives = JSON.parse(saved);
         } else {
-            archives = {
-                default: { history: [], lastUserMessage: null }
-            };
+            archives = { default: { history: [], lastUserMessage: null } };
         }
         const savedCurrent = localStorage.getItem('deepseek_current_archive');
         if (savedCurrent && archives[savedCurrent]) {
@@ -460,16 +481,9 @@
         }
     }
 
-    function getCurrentArchive() {
-        if (!archives[currentArchiveId]) {
-            archives[currentArchiveId] = { history: [], lastUserMessage: null };
-        }
-        return archives[currentArchiveId];
-    }
-
     function saveCurrentArchive() {
         archives[currentArchiveId] = {
-            history: conversationHistory,
+            history: JSON.parse(JSON.stringify(conversationHistory)),
             lastUserMessage: lastUserMessage
         };
         saveArchivesToLocal();
@@ -504,7 +518,7 @@
             alert('默认存档不能删除，但可以清空内容');
             return;
         }
-        if (confirm(`确定删除存档「${archiveId}」吗？`)) {
+        if (confirm(`确定删除存档「${archiveId.slice(8, 20)}」吗？`)) {
             delete archives[archiveId];
             if (currentArchiveId === archiveId) {
                 currentArchiveId = 'default';
@@ -518,11 +532,20 @@
     }
 
     function updateArchiveButtons() {
-        archiveBar.innerHTML = '<button class="new-archive-btn archive-btn" id="newArchiveBtn">+ 新存档</button>';
+        archiveButtonsDiv.innerHTML = '';
+        // 新建按钮
+        const newBtn = document.createElement('button');
+        newBtn.className = 'archive-btn new-archive-btn';
+        newBtn.textContent = '+ 新建存档';
+        newBtn.onclick = createNewArchive;
+        archiveButtonsDiv.appendChild(newBtn);
+        
+        // 显示所有存档
         for (let id in archives) {
             const btn = document.createElement('button');
             btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
-            btn.textContent = id === 'default' ? '📁 默认存档' : id.slice(8, 20);
+            let displayName = id === 'default' ? '📁 默认' : id.slice(8, 20);
+            btn.textContent = displayName;
             btn.onclick = (function(archiveId) {
                 return function() { loadArchive(archiveId); };
             })(id);
@@ -535,9 +558,8 @@
                     };
                 })(id);
             }
-            archiveBar.appendChild(btn);
+            archiveButtonsDiv.appendChild(btn);
         }
-        document.getElementById('newArchiveBtn').addEventListener('click', createNewArchive);
     }
 
     // ========== 消息渲染 ==========
@@ -632,7 +654,7 @@
             const welcome = document.createElement('div');
             welcome.className = 'message assistant-message';
             const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
-            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.src=''; this.innerText='🤖'"></div><div class="message-content"><div class="bubble">你好！我是 DeepSeek AI，你的仿生机器人男友 💙<br>保存 API Key 后就可以开始对话啦~<br>长按自己的消息可以撤回，右上角可以开关时间戳</div>${timestampHtml}</div>`;
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！我是 DeepSeek AI 💙<br>保存 API Key 后就可以开始对话啦~<br>长按自己的消息可以撤回，点击「隐藏时间」可开关时间戳</div>${timestampHtml}</div>`;
             chatMessagesDiv.appendChild(welcome);
         } else {
             conversationHistory.forEach(msg => {
@@ -676,9 +698,6 @@
         chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
-
-    let conversationHistory = [];
-    let lastUserMessage = null;
 
     async function sendMessage(userText = null, isRegenerate = false) {
         if (isLoading) return;
@@ -797,7 +816,7 @@
     messageInput.addEventListener('input', autoResize);
     
     loadArchivesFromLocal();
-    const archive = getCurrentArchive();
+    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null };
     conversationHistory = archive.history || [];
     lastUserMessage = archive.lastUserMessage;
     updateArchiveButtons();
