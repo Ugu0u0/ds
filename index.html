@@ -386,21 +386,90 @@
 
     // ========== 备份/存档UI ==========
     function updateArchiveButtons() {
-        const bar = document.getElementById('archiveBar'); if(!bar) return;
-        bar.innerHTML = '<button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button><button class="archive-btn backup-btn" id="exportBackupBtn">💾 备份</button><button class="archive-btn backup-btn" id="importBackupBtn">📂 恢复</button>';
-        for(let id in archives) {
-            const btn = document.createElement('button'); btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
-            btn.textContent = id === 'default' ? '📁 默认' : id.slice(0,10); 
-            btn.onclick = (function(aid) { return function() { currentArchiveId = aid; loadCurrent(); renderFullHistory(); updateArchiveButtons(); }; })(id);
-            if (id !== 'default') {
-                let timer; btn.addEventListener('touchstart', (e) => { e.preventDefault(); timer = setTimeout(() => { if(confirm(`删除存档「${id}」？`)) { delete archives[id]; if(currentArchiveId === id) currentArchiveId = 'default'; saveArchives(); loadCurrent(); renderFullHistory(); updateArchiveButtons(); } }, 500); }); btn.addEventListener('touchend', () => clearTimeout(timer)); btn.addEventListener('touchmove', () => clearTimeout(timer));
-            }
-            bar.appendChild(btn);
+    const bar = document.getElementById('archiveBar'); 
+    if(!bar) return;
+    bar.innerHTML = '<button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button><button class="archive-btn backup-btn" id="exportBackupBtn">💾 备份</button><button class="archive-btn backup-btn" id="importBackupBtn">📂 恢复</button>';
+    
+    // 遍历所有存档，生成切换按钮
+    for(let id in archives) {
+        const btn = document.createElement('button'); 
+        btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
+        btn.textContent = id === 'default' ? '📁 默认' : id.slice(0,10); 
+        
+        // 点击切换存档
+        btn.addEventListener('click', (function(aid) { 
+            return function(e) { 
+                e.stopPropagation();
+                currentArchiveId = aid; 
+                loadCurrent(); 
+                renderFullHistory(); 
+                updateArchiveButtons(); 
+            }; 
+        })(id));
+        
+        // 长按删除存档（仅非默认存档）
+        if (id !== 'default') {
+            let timer;
+            btn.addEventListener('touchstart', (e) => { 
+                e.stopPropagation();
+                timer = setTimeout(() => { 
+                    if(confirm(`删除存档「${id}」？`)) { 
+                        delete archives[id]; 
+                        if(currentArchiveId === id) currentArchiveId = 'default'; 
+                        saveArchives(); 
+                        loadCurrent(); 
+                        renderFullHistory(); 
+                        updateArchiveButtons(); 
+                    } 
+                }, 500); 
+            });
+            btn.addEventListener('touchend', () => clearTimeout(timer));
+            btn.addEventListener('touchmove', () => clearTimeout(timer));
         }
-        document.getElementById('newArchiveBtn')?.addEventListener('click', () => { currentArchiveId = '存档_' + Date.now(); archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; saveArchives(); loadCurrent(); renderFullHistory(); updateArchiveButtons(); });
-        document.getElementById('exportBackupBtn')?.addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({archives,currentArchiveId})], {type:'application/json'})); a.download = `backup_${Date.now()}.json`; a.click(); });
-        document.getElementById('importBackupBtn')?.addEventListener('click', () => { const inp = document.createElement('input'); inp.type='file'; inp.onchange = async e => { const f = e.target.files[0]; if(f) { const t = await f.text(); const b = JSON.parse(t); if(b.archives) { archives = b.archives; currentArchiveId = b.currentArchiveId; saveArchives(); loadCurrent(); renderFullHistory(); updateArchiveButtons(); alert('恢复成功'); } } }; inp.click(); });
+        bar.appendChild(btn);
     }
+    
+    // 绑定“新建存档”按钮
+    document.getElementById('newArchiveBtn')?.addEventListener('click', () => { 
+        currentArchiveId = '存档_' + Date.now(); 
+        archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; 
+        saveArchives(); 
+        loadCurrent(); 
+        renderFullHistory(); 
+        updateArchiveButtons(); 
+    });
+    
+    // 绑定“备份”按钮
+    document.getElementById('exportBackupBtn')?.addEventListener('click', () => { 
+        const a = document.createElement('a'); 
+        a.href = URL.createObjectURL(new Blob([JSON.stringify({archives,currentArchiveId})], {type:'application/json'})); 
+        a.download = `backup_${Date.now()}.json`; 
+        a.click(); 
+    });
+    
+    // 绑定“恢复”按钮
+    document.getElementById('importBackupBtn')?.addEventListener('click', () => { 
+        const inp = document.createElement('input'); 
+        inp.type='file'; 
+        inp.onchange = async e => { 
+            const f = e.target.files[0]; 
+            if(f) { 
+                const t = await f.text(); 
+                const b = JSON.parse(t); 
+                if(b.archives) { 
+                    archives = b.archives; 
+                    currentArchiveId = b.currentArchiveId; 
+                    saveArchives(); 
+                    loadCurrent(); 
+                    renderFullHistory(); 
+                    updateArchiveButtons(); 
+                    alert('恢复成功'); 
+                } 
+            } 
+        }; 
+        inp.click(); 
+    });
+}
 
     // ========== 消息渲染（长按菜单） ==========
     function addMessageToUI(role, content, msgId = null, customTime = null) {
