@@ -441,9 +441,9 @@
     function addRecallMessage() { const recallDiv = document.createElement('div'); recallDiv.className = 'message recall-message'; recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`; document.getElementById('chatMessages').appendChild(recallDiv); recallDiv.scrollIntoView({ behavior: 'smooth', block: 'end' }); }
     document.getElementById('recallMsgBtn')?.addEventListener('click', recallUserMessage); document.getElementById('deleteMsgBtn')?.addEventListener('click', deleteAnyMessage);
 
-    function renderFullHistory() { const chatDiv = document.getElementById('chatMessages'); chatDiv.innerHTML = ''; if(!conversationHistory.length) { const welcome = document.createElement('div'); welcome.className = 'message assistant-message'; welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble" style="white-space: pre-wrap;">你好！💙\n\n保存 API Key 后就可以开始对话~\n点击 💙 展开设置面板\n每轮对话我会自动记住要点\n长按消息可撤回或删除</div></div>`; chatDiv.appendChild(welcome); return; } conversationHistory.forEach(msg => { if(msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); }); }
+    function renderFullHistory() { const chatDiv = document.getElementById('chatMessages'); chatDiv.innerHTML = ''; if(!conversationHistory.length) { const welcome = document.createElement('div'); welcome.className = 'message assistant-message'; welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble" style="white-space: pre-wrap;">你好！💙\n\n保存 API Key 后就可以开始对话~\n点击 💙 展开设置面板\n每轮对话我会自动记住要点\n长按消息可撤回或删除\n\n输入 $指令 可以生成精美卡片（如 $查看日记本）</div></div>`; chatDiv.appendChild(welcome); return; } conversationHistory.forEach(msg => { if(msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); }); }
 
-    // ========== API 调用（强制拆分） ==========
+    // ========== API 调用（支持指令和强制拆分） ==========
     async function callDeepSeek(userMsg) {
         if(!currentApiKey) throw new Error('请先保存 API Key');
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -472,6 +472,112 @@
         return (await res.json()).choices[0].message.content;
     }
 
+    // 专门处理指令的函数（iMessage 风格卡片）
+    async function callDeepSeekForCommand(command) {
+        if(!currentApiKey) throw new Error('请先保存 API Key');
+        const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+            body: JSON.stringify({
+                model: 'deepseek-chat',
+                messages: [
+                    { role: 'system', content: `你是一个UI生成助手。用户会输入一个以$开头的指令（如"$查看日记本"）。你需要根据指令内容，生成一个完整的HTML卡片。
+
+**重要规则**：
+1. 只输出HTML代码，不要输出任何解释文字
+2. 卡片风格必须模仿 iMessage 短信气泡（浅灰色背景、圆角、简洁）
+3. 标题用 iMessage 风格的蓝色字体
+
+请使用以下模板：
+
+<style>
+.command-card {
+    background: #e5e5ea;
+    border-radius: 18px;
+    margin: 8px 0;
+    max-width: 95%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+    animation: fadeInUp 0.3s ease-out;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.command-card-header {
+    background: #d1d1d6;
+    padding: 10px 16px;
+    border-bottom: 0.5px solid #c6c6c8;
+}
+.command-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #007aff;
+    margin: 0;
+}
+.command-card-subtitle {
+    font-size: 12px;
+    color: #5c5c5e;
+    margin: 4px 0 0 0;
+}
+.command-card-content {
+    padding: 14px 16px;
+    background: #ffffff;
+}
+.command-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.command-list-item {
+    padding: 10px 0;
+    border-bottom: 0.5px solid #e5e5ea;
+    font-size: 14px;
+    color: #1c1c1e;
+}
+.command-list-item:last-child {
+    border-bottom: none;
+}
+.command-bubble {
+    background: #e5e5ea;
+    border-radius: 18px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-size: 14px;
+    color: #000;
+}
+.command-bubble-right {
+    background: #007aff;
+    color: white;
+    border-radius: 18px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-size: 14px;
+    text-align: right;
+}
+</style>
+
+<div class="command-card">
+    <div class="command-card-header">
+        <div class="command-card-title">[标题]</div>
+        <div class="command-card-subtitle">[副标题]</div>
+    </div>
+    <div class="command-card-content">
+        [内容]
+    </div>
+</div>
+
+**注意**：只输出这个HTML卡片，不要输出其他任何文字。` },
+                    { role: 'user', content: command }
+                ],
+                temperature: 0.8,
+                max_tokens: 1500
+            })
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()).choices[0].message.content;
+    }
+
     let typingDiv = null;
     function showTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } const div = document.createElement('div'); div.className = 'message assistant-message'; div.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div></div>`; document.getElementById('chatMessages').appendChild(div); div.scrollIntoView({ behavior: 'smooth', block: 'end' }); typingDiv = div; }
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
@@ -479,18 +585,37 @@
     async function callAiAndAddResponse(userMsg) {
         showTyping();
         try {
+            // 检查是否是指令（以 $ 开头）
+            if (userMsg.trim().startsWith('$')) {
+                const command = userMsg.trim();
+                
+                // 功能调整类指令：静默执行，不输出消息
+                if (command.includes('改正') || command.includes('继续记录') || command.includes('不要忘记') || command.includes('请继续')) {
+                    console.log("收到功能调整指令:", command);
+                    saveCurrent();
+                    hideTyping();
+                    return;
+                }
+                
+                // 普通指令：输出卡片
+                const commandReply = await callDeepSeekForCommand(command);
+                const obj = addMessageToUI('assistant', commandReply);
+                conversationHistory.push({ role: 'assistant', content: commandReply, id: obj.id, timestamp: obj.time });
+                saveCurrent();
+                hideTyping();
+                return;
+            }
+            
+            // 普通消息：调用 AI 并强制拆分
             const reply = await callDeepSeek(userMsg);
             hideTyping();
             
-            // 强制拆分逻辑
             let parts = [];
             if (reply.includes('【分割】')) {
                 parts = reply.split('【分割】');
             } else {
-                // 按句子分隔符拆分
                 parts = reply.split(/(?<=[。！？；\n])/g);
                 parts = parts.filter(p => p.trim().length > 0);
-                // 如果拆分后只有一段，且长度小于100字，就不拆
                 if (parts.length === 1 && parts[0].length < 100) {
                     parts = [reply];
                 }
