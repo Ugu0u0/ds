@@ -1114,51 +1114,53 @@
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
 
     async function sendMessage(userText = null, isRegenerate = false) {
-        if (isLoading) return;
-        let text = userText !== null ? userText : document.getElementById('messageInput').value.trim();
-        if (!text) return;
-        if (!currentApiKey) { alert('请先保存 API Key'); return; }
-        if (!isRegenerate) {
-            document.getElementById('messageInput').value = '';
-            const userMsgObj = addMessageToUI('user', text);
-            conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id, timestamp: userMsgObj.time });
-            lastUserMessage = text;
-        } else {
-            const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
-            if (lastAI !== -1) {
-                const realIdx = conversationHistory.length - 1 - lastAI;
-                const removed = conversationHistory.splice(realIdx, 1)[0];
-                if (removed?.id) document.querySelector(`[data-msg-id="${removed.id}"]`)?.remove();
-            }
-        }
-        isLoading = true;
-        document.getElementById('sendBtn').classList.add('disabled');
-        showTyping();
-        try {
-            const reply = await callDeepSeek(lastUserMessage);
-            hideTyping();
-            const assistantObj = addMessageToUI('assistant', reply);
-            conversationHistory.push({ role: 'assistant', content: reply, id: assistantObj.id, timestamp: assistantObj.time });
-            if (!isRegenerate) {
-                conversationCounter++;
-                saveMemoryToLocal();
-                updateMemoryDisplay();
-                if (conversationCounter % 15 === 0) {
-                    const recentMessages = conversationHistory.slice(-30);
-                    const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
-                    await summarizeToShortMemory(conversationText);
-                }
-            }
-        } catch (err) {
-            hideTyping();
-            addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
-        } finally {
-            isLoading = false;
-            document.getElementById('sendBtn').classList.remove('disabled');
-            document.getElementById('messageInput').focus();
-            saveCurrentArchive();
+    let text = userText !== null ? userText : document.getElementById('messageInput').value.trim();
+    if (!text) return;
+    if (!currentApiKey) { alert('请先保存 API Key'); return; }
+    
+    if (!isRegenerate) {
+        document.getElementById('messageInput').value = '';
+        const userMsgObj = addMessageToUI('user', text);
+        conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id, timestamp: userMsgObj.time });
+        lastUserMessage = text;
+    } else {
+        const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
+        if (lastAI !== -1) {
+            const realIdx = conversationHistory.length - 1 - lastAI;
+            const removed = conversationHistory.splice(realIdx, 1)[0];
+            if (removed?.id) document.querySelector(`[data-msg-id="${removed.id}"]`)?.remove();
         }
     }
+    
+    // 每条消息独立调用 AI，不等待前一条回复
+    callAiAndAddResponse(lastUserMessage);
+    saveCurrentArchive();
+}
+
+// 新增：独立的 AI 调用函数
+async function callAiAndAddResponse(userMsg) {
+    showTyping();
+    try {
+        const reply = await callDeepSeek(userMsg);
+        hideTyping();
+        const assistantObj = addMessageToUI('assistant', reply);
+        conversationHistory.push({ role: 'assistant', content: reply, id: assistantObj.id, timestamp: assistantObj.time });
+        
+        conversationCounter++;
+        saveMemoryToLocal();
+        updateMemoryDisplay();
+        if (conversationCounter % 15 === 0) {
+            const recentMessages = conversationHistory.slice(-30);
+            const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
+            await summarizeToShortMemory(conversationText);
+        }
+    } catch (err) {
+        hideTyping();
+        addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
+    } finally {
+        saveCurrentArchive();
+    }
+}
 
     function regenerateLast() { if (!isLoading && lastUserMessage) sendMessage(lastUserMessage, true); else if (!lastUserMessage) alert('没有可以重说的消息'); }
     function clearCurrentConversation() { if (confirm('清空当前存档？')) { conversationHistory = []; lastUserMessage = null; renderFullHistory(); saveCurrentArchive(); } }
