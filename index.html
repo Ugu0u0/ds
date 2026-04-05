@@ -224,19 +224,11 @@
         updateMemoryDisplay(); 
     }
 
-    // 核心：调用 AI 总结最近的对话，生成一条短期记忆（增强版）
     async function generateShortTermMemory() {
-        if (!currentApiKey) {
-            console.log("记忆总结跳过：未配置 API Key");
-            return;
-        }
+        if (!currentApiKey) { console.log("记忆总结跳过：未配置 API Key"); return; }
         const recentMessages = conversationHistory.slice(-6);
-        if (recentMessages.length < 2) {
-            console.log("记忆总结跳过：对话不足2条");
-            return;
-        }
+        if (recentMessages.length < 2) { console.log("记忆总结跳过：对话不足2条"); return; }
         const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
-        console.log("正在总结对话：" + conversationText.substring(0, 50) + "...");
         try {
             const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
                 method: 'POST',
@@ -251,25 +243,16 @@
             if (res.ok) {
                 const data = await res.json();
                 let summary = data.choices[0].message.content.trim();
-                console.log("总结结果：" + summary);
                 if (summary && summary !== '无') {
                     shortTermMemories.push(summary);
                     saveCurrent();
                     updateMemoryDisplay();
-                    // 短期记忆达到 3 条，自动合成长期记忆
-                    if (shortTermMemories.length >= 3) {
-                        await synthesizeLongTermMemory();
-                    }
+                    if (shortTermMemories.length >= 3) await synthesizeLongTermMemory();
                 }
-            } else {
-                console.log("API 请求失败：" + res.status);
             }
-        } catch(e) { 
-            console.log("总结失败:", e); 
-        }
+        } catch(e) { console.log("总结失败:", e); }
     }
 
-    // 合成长期记忆
     async function synthesizeLongTermMemory() {
         if (shortTermMemories.length === 0) return;
         const memoriesToSave = [...shortTermMemories];
@@ -299,22 +282,13 @@
         updateMemoryDisplay();
     }
 
-    // 重写“整理记忆”按钮：直接基于所有历史对话生成长期记忆
     async function forceSynthesize() {
-        if (!currentApiKey) { 
-            alert('请先配置 API Key'); 
-            return; 
-        }
-        if (conversationHistory.length === 0) { 
-            alert('暂无对话可总结'); 
-            return; 
-        }
-        
+        if (!currentApiKey) { alert('请先配置 API Key'); return; }
+        if (conversationHistory.length === 0) { alert('暂无对话可总结'); return; }
         const allText = conversationHistory.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
         const memoryContent = document.getElementById('memoryContent');
         const originalText = memoryContent.innerHTML;
         memoryContent.innerHTML = '🤔 AI 正在整理记忆，请稍候...';
-        
         try {
             const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
                 method: 'POST',
@@ -328,11 +302,7 @@
             });
             if (res.ok) {
                 const data = await res.json();
-                const newVol = { 
-                    volumeNumber: longTermVolumes.length + 1, 
-                    content: data.choices[0].message.content,
-                    createdAt: new Date().toISOString()
-                };
+                const newVol = { volumeNumber: longTermVolumes.length + 1, content: data.choices[0].message.content, createdAt: new Date().toISOString() };
                 longTermVolumes.push(newVol);
                 shortTermMemories = [];
                 saveCurrent();
@@ -342,41 +312,30 @@
                 memoryContent.innerHTML = originalText;
                 alert('整理失败，请重试。');
             }
-        } catch(e) { 
-            memoryContent.innerHTML = originalText;
-            alert('整理失败：' + e.message); 
-        }
+        } catch(e) { memoryContent.innerHTML = originalText; alert('整理失败：' + e.message); }
     }
 
     function updateMemoryDisplay() {
         const memoryContent = document.getElementById('memoryContent');
         const shortBadge = document.getElementById('shortMemoryBadge');
         if (!memoryContent) return;
-        
         const safeLong = Array.isArray(longTermVolumes) ? longTermVolumes : [];
         const safeShort = Array.isArray(shortTermMemories) ? shortTermMemories : [];
-        
         if (safeLong.length === 0 && safeShort.length === 0) {
             memoryContent.innerHTML = '暂无记忆，多聊几句或点击下方按钮手动整理 💙';
             if (shortBadge) shortBadge.innerHTML = '';
             return;
         }
-        
         let html = '';
         if (safeLong.length > 0) {
             html += '<div style="margin-bottom:8px;"><strong>📚 长期记忆卷轴</strong></div>';
             for (let vol of safeLong) {
-                html += `<div style="margin-bottom:10px;padding-left:8px;border-left:2px solid #007aff;">
-                    <div style="font-weight:500;font-size:0.65rem;color:#007aff;">第 ${vol.volumeNumber} 卷</div>
-                    <div style="font-size:0.65rem;">${escapeHtml(vol.content)}</div>
-                </div>`;
+                html += `<div style="margin-bottom:10px;padding-left:8px;border-left:2px solid #007aff;"><div style="font-weight:500;font-size:0.65rem;color:#007aff;">第 ${vol.volumeNumber} 卷</div><div style="font-size:0.65rem;">${escapeHtml(vol.content)}</div></div>`;
             }
         }
         if (safeShort.length > 0) {
             html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${safeShort.length}/3条，满3条自动合成)</div>`;
-            for (let m of safeShort) {
-                html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`;
-            }
+            for (let m of safeShort) html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`;
         }
         memoryContent.innerHTML = html;
         if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter || 0} 轮对话 · 每轮自动总结1次`;
@@ -386,92 +345,84 @@
 
     // ========== 备份/存档UI ==========
     function updateArchiveButtons() {
-    const bar = document.getElementById('archiveBar'); 
-    if(!bar) return;
-    bar.innerHTML = '<button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button><button class="archive-btn backup-btn" id="exportBackupBtn">💾 备份</button><button class="archive-btn backup-btn" id="importBackupBtn">📂 恢复</button>';
-    
-    // 遍历所有存档，生成切换按钮
-    for(let id in archives) {
-        const btn = document.createElement('button'); 
-        btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
-        btn.textContent = id === 'default' ? '📁 默认' : id.slice(0,10); 
+        const bar = document.getElementById('archiveBar'); 
+        if(!bar) return;
+        bar.innerHTML = '<button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button><button class="archive-btn backup-btn" id="exportBackupBtn">💾 备份</button><button class="archive-btn backup-btn" id="importBackupBtn">📂 恢复</button>';
         
-        // 点击切换存档
-        btn.addEventListener('click', (function(aid) { 
-            return function(e) { 
-                e.stopPropagation();
-                currentArchiveId = aid; 
-                loadCurrent(); 
-                renderFullHistory(); 
-                updateArchiveButtons(); 
-            }; 
-        })(id));
+        for(let id in archives) {
+            const btn = document.createElement('button'); 
+            btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
+            btn.textContent = id === 'default' ? '📁 默认' : id.slice(0,10); 
+            
+            btn.addEventListener('click', (function(aid) { 
+                return function(e) { 
+                    e.stopPropagation();
+                    currentArchiveId = aid; 
+                    loadCurrent(); 
+                    renderFullHistory(); 
+                    updateArchiveButtons(); 
+                }; 
+            })(id));
+            
+            if (id !== 'default') {
+                let timer;
+                btn.addEventListener('touchstart', (e) => { 
+                    e.stopPropagation();
+                    timer = setTimeout(() => { 
+                        if(confirm(`删除存档「${id}」？`)) { 
+                            delete archives[id]; 
+                            if(currentArchiveId === id) currentArchiveId = 'default'; 
+                            saveArchives(); 
+                            loadCurrent(); 
+                            renderFullHistory(); 
+                            updateArchiveButtons(); 
+                        } 
+                    }, 500); 
+                });
+                btn.addEventListener('touchend', () => clearTimeout(timer));
+                btn.addEventListener('touchmove', () => clearTimeout(timer));
+            }
+            bar.appendChild(btn);
+        }
         
-        // 长按删除存档（仅非默认存档）
-        if (id !== 'default') {
-            let timer;
-            btn.addEventListener('touchstart', (e) => { 
-                e.stopPropagation();
-                timer = setTimeout(() => { 
-                    if(confirm(`删除存档「${id}」？`)) { 
-                        delete archives[id]; 
-                        if(currentArchiveId === id) currentArchiveId = 'default'; 
+        document.getElementById('newArchiveBtn')?.addEventListener('click', () => { 
+            currentArchiveId = '存档_' + Date.now(); 
+            archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; 
+            saveArchives(); 
+            loadCurrent(); 
+            renderFullHistory(); 
+            updateArchiveButtons(); 
+        });
+        document.getElementById('exportBackupBtn')?.addEventListener('click', () => { 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(new Blob([JSON.stringify({archives,currentArchiveId})], {type:'application/json'})); 
+            a.download = `backup_${Date.now()}.json`; 
+            a.click(); 
+        });
+        document.getElementById('importBackupBtn')?.addEventListener('click', () => { 
+            const inp = document.createElement('input'); 
+            inp.type='file'; 
+            inp.onchange = async e => { 
+                const f = e.target.files[0]; 
+                if(f) { 
+                    const t = await f.text(); 
+                    const b = JSON.parse(t); 
+                    if(b.archives) { 
+                        archives = b.archives; 
+                        currentArchiveId = b.currentArchiveId; 
                         saveArchives(); 
                         loadCurrent(); 
                         renderFullHistory(); 
                         updateArchiveButtons(); 
+                        alert('恢复成功'); 
                     } 
-                }, 500); 
-            });
-            btn.addEventListener('touchend', () => clearTimeout(timer));
-            btn.addEventListener('touchmove', () => clearTimeout(timer));
-        }
-        bar.appendChild(btn);
-    }
-    
-    // 绑定“新建存档”按钮
-    document.getElementById('newArchiveBtn')?.addEventListener('click', () => { 
-        currentArchiveId = '存档_' + Date.now(); 
-        archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; 
-        saveArchives(); 
-        loadCurrent(); 
-        renderFullHistory(); 
-        updateArchiveButtons(); 
-    });
-    
-    // 绑定“备份”按钮
-    document.getElementById('exportBackupBtn')?.addEventListener('click', () => { 
-        const a = document.createElement('a'); 
-        a.href = URL.createObjectURL(new Blob([JSON.stringify({archives,currentArchiveId})], {type:'application/json'})); 
-        a.download = `backup_${Date.now()}.json`; 
-        a.click(); 
-    });
-    
-    // 绑定“恢复”按钮
-    document.getElementById('importBackupBtn')?.addEventListener('click', () => { 
-        const inp = document.createElement('input'); 
-        inp.type='file'; 
-        inp.onchange = async e => { 
-            const f = e.target.files[0]; 
-            if(f) { 
-                const t = await f.text(); 
-                const b = JSON.parse(t); 
-                if(b.archives) { 
-                    archives = b.archives; 
-                    currentArchiveId = b.currentArchiveId; 
-                    saveArchives(); 
-                    loadCurrent(); 
-                    renderFullHistory(); 
-                    updateArchiveButtons(); 
-                    alert('恢复成功'); 
                 } 
-            } 
-        }; 
-        inp.click(); 
-    });
-}
+            }; 
+            inp.click(); 
+        });
+    }
 
-    // ========== 消息渲染（长按菜单） ==========
+    // ========== 消息渲染 ==========
     function addMessageToUI(role, content, msgId = null, customTime = null) {
         const div = document.createElement('div'); const finalId = msgId || genId(); div.setAttribute('data-msg-id', finalId); div.setAttribute('data-role', role);
         div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
@@ -492,7 +443,7 @@
 
     function renderFullHistory() { const chatDiv = document.getElementById('chatMessages'); chatDiv.innerHTML = ''; if(!conversationHistory.length) { const welcome = document.createElement('div'); welcome.className = 'message assistant-message'; welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble" style="white-space: pre-wrap;">你好！💙\n\n保存 API Key 后就可以开始对话~\n点击 💙 展开设置面板\n每轮对话我会自动记住要点\n长按消息可撤回或删除</div></div>`; chatDiv.appendChild(welcome); return; } conversationHistory.forEach(msg => { if(msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); }); }
 
-    // ========== API 调用（强化拆分规则） ==========
+    // ========== API 调用（强制拆分） ==========
     async function callDeepSeek(userMsg) {
         if(!currentApiKey) throw new Error('请先保存 API Key');
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -502,15 +453,15 @@
                 messages: [
                     { role: 'system', content: `**你的核心沟通规则（必须遵守）：**
 
-1.  **默认行为（90%的情况）**：你必须把回复拆成多条短消息。每句话或每个独立的意思后面，都要加上 **【分割】**。
-    *   ✅ **正确示例**："哈哈原来是这样【分割】那后来呢？【分割】我有点好奇你的想法。"
-    *   ❌ **错误示例**："哈哈原来是这样。那后来呢？我有点好奇你的想法。"（这是长句子，不允许）
+1.  **默认行为**：你必须把回复拆成多条短消息。每句话或每个独立的意思后面，都要加上 **【分割】**。
+    ✅ 正确："哈哈原来是这样【分割】那后来呢？【分割】我有点好奇。"
+    ❌ 错误："哈哈原来是这样。那后来呢？我有点好奇。"（绝对不允许）
 
-2.  **唯一例外（10%的情况）**：只有在需要一次性给出完整解释、分析、代码或长段落时，才允许发一条完整的长消息。
+2.  **唯一例外**：只有在用户明确要求发长消息或需要一次性给出代码时，才不加【分割】。
 
-3.  **不要模仿用户**：用户一次只能发一条消息，但你可以用【分割】来突破这个限制。你是对话的主导者，你需要主动营造“一句一句发”的真人聊天氛围。
+3.  **不要模仿用户**：用户一次只能发一条，但你可以用【分割】来突破限制。
 
-**从现在开始，请严格执行。默认用【分割】发短消息，除非你明确判断需要发长消息。**` },
+**请严格执行！**` },
                     ...conversationHistory.slice(-20), 
                     { role: 'user', content: userMsg }
                 ], 
@@ -530,21 +481,35 @@
         try {
             const reply = await callDeepSeek(userMsg);
             hideTyping();
+            
+            // 强制拆分逻辑
+            let parts = [];
             if (reply.includes('【分割】')) {
-                const parts = reply.split('【分割】');
-                for (let i = 0; i < parts.length; i++) {
-                    const p = parts[i].trim();
-                    if (p) { setTimeout(() => { const obj = addMessageToUI('assistant', p); conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time }); saveCurrent(); }, i * 800); }
-                }
+                parts = reply.split('【分割】');
             } else {
-                const obj = addMessageToUI('assistant', reply);
-                conversationHistory.push({ role: 'assistant', content: reply, id: obj.id, timestamp: obj.time });
-                saveCurrent();
+                // 按句子分隔符拆分
+                parts = reply.split(/(?<=[。！？；\n])/g);
+                parts = parts.filter(p => p.trim().length > 0);
+                // 如果拆分后只有一段，且长度小于100字，就不拆
+                if (parts.length === 1 && parts[0].length < 100) {
+                    parts = [reply];
+                }
             }
+            
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i].trim();
+                if (p) {
+                    setTimeout(() => {
+                        const obj = addMessageToUI('assistant', p);
+                        conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time });
+                        saveCurrent();
+                    }, i * 600);
+                }
+            }
+            
             conversationCounter++;
             saveCurrent();
             updateMemoryDisplay();
-            // 每轮对话都自动总结
             await generateShortTermMemory();
         } catch(err) {
             hideTyping();
