@@ -996,7 +996,7 @@
         const timeStr = customTime || getCurrentTimeString();
         const timestampHtml = showTimestamp ? `<div class="timestamp">${timeStr}</div>` : '';
         const avatarHtml = role === 'user' ? '<div class="avatar"><img src="Q小狐柚.png" alt="我" onerror="this.innerText=\'🐱\'"></div>' : '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.innerText=\'🤖\'"></div>';
-        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${timestampHtml}</div>`;
+        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble" style="white-space: pre-wrap;">${escapeHtml(content)}</div>${timestampHtml}</div>`;
         let pressTimer;
         div.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500); });
         div.addEventListener('touchend', () => clearTimeout(pressTimer));
