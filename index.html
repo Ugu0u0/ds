@@ -511,14 +511,19 @@
         </div>
     </div>
 
-    <div id="memoryScrollArea" class="memory-scroll" style="display: none;">
-        <div class="memory-header">
-            <span class="memory-title">📜 记忆卷轴</span>
-            <button class="memory-refresh" id="refreshMemoryBtn">🔄 整理</button>
-        </div>
-        <div class="memory-content" id="memoryContent">加载中...</div>
-        <div class="short-memory-badge" id="shortMemoryBadge"></div>
-    </div>
+    <div class="collapse-panel" id="memoryPanel">
+                <div class="panel-header" id="memoryPanelHeader">
+                    <span class="panel-title">📜 记忆库</span>
+                    <span class="panel-arrow" id="memoryPanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="memoryPanelContent">
+                    <div class="api-section" id="memoryDisplayArea">
+                        <div id="memoryContent" style="font-size: 0.7rem; line-height: 1.4; color: #5c5c5e;">加载中...</div>
+                        <div id="shortMemoryBadge" style="font-size: 0.6rem; color: #8e8e93; margin-top: 8px;"></div>
+                        <button id="refreshMemoryBtn" class="action-btn" style="margin-top: 10px; width: 100%;">🔄 整理记忆</button>
+                    </div>
+                </div>
+            </div>
 
     <div class="chat-messages" id="chatMessages"></div>
 
@@ -540,7 +545,7 @@
 <script>
     // ========== 折叠面板控制 ==========
     let mainExpanded = false;
-    let subPanelStates = { archivePanel: true, actionPanel: true, apiPanel: true };
+    let subPanelStates = { archivePanel: true, actionPanel: true, apiPanel: true, memoryPanel: true };
     const panelsWrapper = document.getElementById('panelsWrapper');
 
     function updatePanelsPosition() {
@@ -651,9 +656,10 @@
     window.addEventListener('resize', () => { if (mainExpanded) updatePanelsPosition(); });
 
     document.getElementById('mainToggle')?.addEventListener('click', toggleMain);
-    document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
-    document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
-    document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
+document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
+document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
+document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
+document.getElementById('memoryPanelHeader')?.addEventListener('click', () => toggleSubPanel('memoryPanel'));
 
     // ========== 记忆系统 ==========
     let currentApiKey = '';
@@ -787,32 +793,38 @@
     }
 
     function updateMemoryDisplay() {
-        const memoryArea = document.getElementById('memoryScrollArea');
-        const memoryContent = document.getElementById('memoryContent');
-        const shortBadge = document.getElementById('shortMemoryBadge');
-        if (longTermVolumes.length === 0 && shortTermMemories.length === 0) {
-            memoryArea.style.display = 'none';
-            return;
-        }
-        memoryArea.style.display = 'block';
-        let longMemoryHtml = '';
-        if (longTermVolumes.length > 0) {
-            longMemoryHtml = '<div style="margin-bottom: 6px;"><strong>📚 长期记忆</strong></div>';
-            for (let vol of longTermVolumes.slice(-5)) {
-                longMemoryHtml += `<div style="margin-bottom: 8px; padding-left: 8px; border-left: 2px solid #007aff;">
-                    <div style="font-weight: 500; font-size: 0.6rem; color: #007aff;">第 ${vol.volumeNumber} 卷</div>
-                    <div style="font-size: 0.65rem;">${escapeHtml(vol.content.substring(0, 100))}${vol.content.length > 100 ? '...' : ''}</div>
-                </div>`;
-            }
-        }
-        let shortHtml = '';
-        if (shortTermMemories.length > 0) {
-            shortHtml = `<div style="margin-top: 6px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/15条)</div>`;
-            shortHtml += `<div style="font-size: 0.6rem; color: #8e8e93;">${shortTermMemories.slice(-3).map(m => m.substring(0, 40)).join('；')}${shortTermMemories.length > 3 ? '...' : ''}</div>`;
-        }
-        memoryContent.innerHTML = longMemoryHtml + shortHtml;
-        shortBadge.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
+    const memoryContent = document.getElementById('memoryContent');
+    const shortBadge = document.getElementById('shortMemoryBadge');
+    if (!memoryContent) return;
+    
+    if (longTermVolumes.length === 0 && shortTermMemories.length === 0) {
+        memoryContent.innerHTML = '暂无记忆，多聊几句就会有了 💙';
+        if (shortBadge) shortBadge.innerHTML = '';
+        return;
     }
+    
+    let longMemoryHtml = '';
+    if (longTermVolumes.length > 0) {
+        longMemoryHtml = '<div style="margin-bottom: 8px;"><strong>📚 长期记忆卷轴</strong></div>';
+        for (let vol of longTermVolumes) {
+            longMemoryHtml += `<div style="margin-bottom: 10px; padding-left: 8px; border-left: 2px solid #007aff;">
+                <div style="font-weight: 500; font-size: 0.65rem; color: #007aff;">第 ${vol.volumeNumber} 卷</div>
+                <div style="font-size: 0.65rem; margin-top: 3px;">${escapeHtml(vol.content)}</div>
+            </div>`;
+        }
+    }
+    
+    let shortHtml = '';
+    if (shortTermMemories.length > 0) {
+        shortHtml = `<div style="margin-top: 8px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/15条)</div>`;
+        for (let i = 0; i < shortTermMemories.length; i++) {
+            shortHtml += `<div style="font-size: 0.6rem; margin-top: 4px; color: #666;">• ${escapeHtml(shortTermMemories[i])}</div>`;
+        }
+    }
+    
+    memoryContent.innerHTML = longMemoryHtml + shortHtml;
+    if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
+}
 
     function getMemoryContext() {
         let context = '';
