@@ -1086,7 +1086,7 @@
     async function callDeepSeek(userMsg) {
         if (!currentApiKey) throw new Error('请先保存 API Key');
         const memoryContext = getMemoryContext();
-        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。` : '请用自然友好的方式和我聊天。';
+        { role: 'system', content: `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。\n\n【回复格式规则】\n- 如果你想一次性发送多条短消息，用 【分割】 隔开\n- 例如：第一条消息内容【分割】第二条消息内容【分割】第三条消息内容\n- 如果你想发一条长消息，直接写，不用加任何标记\n- 请用自然的口语聊天，像真人一样` }
         const messages = [
             { role: 'system', content: systemPrompt },
             ...conversationHistory.filter(m => m.role !== 'system').slice(-25),
@@ -1143,8 +1143,28 @@ async function callAiAndAddResponse(userMsg) {
     try {
         const reply = await callDeepSeek(userMsg);
         hideTyping();
-        const assistantObj = addMessageToUI('assistant', reply);
-        conversationHistory.push({ role: 'assistant', content: reply, id: assistantObj.id, timestamp: assistantObj.time });
+        // 按 【分割】 或 【换条】 拆分消息
+let parts = [];
+if (reply.includes('【分割】') || reply.includes('【换条】')) {
+    parts = reply.split(/【分割】|【换条】/);
+} else if (reply.includes('\n\n')) {
+    // 如果没有标记，按双空行拆分（智能回退）
+    parts = reply.split(/\n\s*\n/);
+} else {
+    parts = [reply];
+}
+
+for (let i = 0; i < parts.length; i++) {
+    const p = parts[i].trim();
+    if (p) {
+        // 延迟发送，更像真人聊天
+        setTimeout(() => {
+            const assistantObj = addMessageToUI('assistant', p);
+            conversationHistory.push({ role: 'assistant', content: p, id: assistantObj.id, timestamp: assistantObj.time });
+            saveCurrentArchive();
+        }, i * 800);
+    }
+}
         
         conversationCounter++;
         saveMemoryToLocal();
