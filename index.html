@@ -99,16 +99,16 @@
 
         /* 面板容器 - 包裹三个折叠栏，默认收起 */
         .panels-wrapper {
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-    background: #ffffff;
-    position: absolute;  /* 新增：脱离文档流 */
-    left: 0;
-    right: 0;
-    top: 100%;  /* 紧贴 💙 下方 */
-    z-index: 99;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-}
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #ffffff;
+            position: absolute;  /* 新增：脱离文档流 */
+            left: 0;
+            right: 0;
+            top: 100%;  /* 紧贴 💙 下方 */
+            z-index: 99;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
         .panels-wrapper.collapsed {
             max-height: 0 !important;
         }
