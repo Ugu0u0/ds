@@ -612,18 +612,35 @@
     function loadCurrent() { const mem = archives[currentArchiveId]?.memory || { short: [], long: [], counter: 0 }; shortTermMemories = mem.short; longTermVolumes = mem.long; conversationCounter = mem.counter; conversationHistory = archives[currentArchiveId]?.history || []; lastUserMessage = conversationHistory.filter(m => m.role === 'user').pop()?.content || ''; updateMemoryDisplay(); }
 
     function updateMemoryDisplay() {
-        const mc = document.getElementById('memoryContent'), sb = document.getElementById('shortMemoryBadge');
-        if (!mc) return;
-        if (!longTermVolumes.length && !shortTermMemories.length) { mc.innerHTML = '暂无记忆，多聊几句就会有了 💙'; if(sb) sb.innerHTML = ''; return; }
-        let html = '<div style="margin-bottom:8px;"><strong>📚 长期记忆卷轴</strong></div>';
-        longTermVolumes.forEach(v => { html += `<div style="margin-bottom:10px;padding-left:8px;border-left:2px solid #007aff;"><div style="font-weight:500;font-size:0.65rem;color:#007aff;">第 ${v.volumeNumber} 卷</div><div style="font-size:0.65rem;">${escapeHtml(v.content)}</div></div>`; });
-        if (shortTermMemories.length) {
-            html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/15条)</div>`;
-            shortTermMemories.forEach(m => { html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`; });
-        }
-        mc.innerHTML = html;
-        if (sb) sb.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
+    const memoryContent = document.getElementById('memoryContent');
+    const shortBadge = document.getElementById('shortMemoryBadge');
+    if (!memoryContent) return;
+    
+    if (longTermVolumes.length === 0 && shortTermMemories.length === 0) {
+        memoryContent.innerHTML = '暂无记忆，多聊几句就会有了 💙';
+        if (shortBadge) shortBadge.innerHTML = '';
+        return;
     }
+    
+    let html = '';
+    if (longTermVolumes.length > 0) {
+        html += '<div style="margin-bottom:8px;"><strong>📚 长期记忆卷轴</strong></div>';
+        for (let vol of longTermVolumes) {
+            html += `<div style="margin-bottom:10px;padding-left:8px;border-left:2px solid #007aff;">
+                <div style="font-weight:500;font-size:0.65rem;color:#007aff;">第 ${vol.volumeNumber} 卷</div>
+                <div style="font-size:0.65rem;">${escapeHtml(vol.content)}</div>
+            </div>`;
+        }
+    }
+    if (shortTermMemories.length > 0) {
+        html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/15条)</div>`;
+        for (let m of shortTermMemories) {
+            html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`;
+        }
+    }
+    memoryContent.innerHTML = html;
+    if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
+}
 
     async function summarize() { /* 模拟总结，实际项目中可调用API */ if(shortTermMemories.length>=15) { longTermVolumes.push({ volumeNumber: longTermVolumes.length+1, content: shortTermMemories.join('；') }); shortTermMemories = []; saveCurrent(); updateMemoryDisplay(); } }
     async function forceSynthesize() { if(shortTermMemories.length) await summarize(); else alert('暂无短期记忆'); }
@@ -672,8 +689,24 @@
     }
 
     let typingDiv = null;
-    function showTyping() { if(typingDiv) typingDiv.remove(); typingDiv = addMessageToUI('assistant', '<span class="typing-indicator"><span></span><span></span><span></span></span>', null, null); typingDiv.element.querySelector('.bubble').classList.add('typing-indicator'); }
-    function hideTyping() { if(typingDiv) { typingDiv.element.remove(); typingDiv = null; } }
+function showTyping() {
+    if (typingDiv) {
+        typingDiv.remove();
+        typingDiv = null;
+    }
+    const div = document.createElement('div');
+    div.className = 'message assistant-message';
+    div.innerHTML = `<div class="avatar">🤖</div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div></div>`;
+    document.getElementById('chatMessages').appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    typingDiv = div;
+}
+function hideTyping() {
+    if (typingDiv) {
+        typingDiv.remove();
+        typingDiv = null;
+    }
+}
 
     async function callAiAndAddResponse(userMsg) {
         showTyping();
