@@ -805,12 +805,21 @@
         conversationHistory.forEach(msg => { if(msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
     }
 
-    // ========== API 调用 ==========
+    // ========== API 调用（支持灵活发送） ==========
     async function callDeepSeek(userMsg) {
         if(!currentApiKey) throw new Error('请先保存 API Key');
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-            body: JSON.stringify({ model: 'deepseek-chat', messages: [...conversationHistory.slice(-20), {role:'user', content:userMsg}], temperature: 0.8 })
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+            body: JSON.stringify({ 
+                model: 'deepseek-chat', 
+                messages: [
+                    { role: 'system', content: '你可以用【分割】来把一条回复拆成多条短消息依次发送。例如：第一条消息【分割】第二条消息【分割】第三条消息。如果不加【分割】，就会发一条完整的长消息。请用自然的口语聊天。' },
+                    ...conversationHistory.slice(-20), 
+                    { role: 'user', content: userMsg }
+                ], 
+                temperature: 0.8 
+            })
         });
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         return (await res.json()).choices[0].message.content;
@@ -833,24 +842,34 @@
         try {
             const reply = await callDeepSeek(userMsg);
             hideTyping();
-            const parts = reply.includes('【分割】') ? reply.split('【分割】') : [reply];
-            for(let i=0;i<parts.length;i++) { 
-                const p = parts[i].trim(); 
-                if(p) { 
-                    setTimeout(() => { 
-                        const obj = addMessageToUI('assistant', p); 
-                        conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time }); 
-                        saveCurrent(); 
-                    }, i*600); 
-                } 
+            
+            // 检查是否包含【分割】标记
+            if (reply.includes('【分割】')) {
+                const parts = reply.split('【分割】');
+                for (let i = 0; i < parts.length; i++) {
+                    const p = parts[i].trim();
+                    if (p) {
+                        setTimeout(() => {
+                            const obj = addMessageToUI('assistant', p);
+                            conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time });
+                            saveCurrent();
+                        }, i * 800);
+                    }
+                }
+            } else {
+                // 没有分割标记，直接发送整条消息
+                const obj = addMessageToUI('assistant', reply);
+                conversationHistory.push({ role: 'assistant', content: reply, id: obj.id, timestamp: obj.time });
+                saveCurrent();
             }
-            conversationCounter++; 
-            if(conversationCounter % 15 === 0) await summarize();
-            saveCurrent(); 
+            
+            conversationCounter++;
+            if (conversationCounter % 15 === 0) await summarize();
+            saveCurrent();
             updateMemoryDisplay();
-        } catch(err) { 
-            hideTyping(); 
-            addMessageToUI('assistant', `⚠️ 错误：${err.message}`); 
+        } catch(err) {
+            hideTyping();
+            addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
         }
     }
 
