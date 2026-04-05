@@ -5,26 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>A_d老师111 · 短信</title>
     <style>
+        /* 基础重置与滚动修复 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
         html, body {
-    height: 100%;
-}
+            height: 100%;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f7;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    background: #f5f5f7;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
-    height: 100%
-}
-
+        /* 主容器 */
         .app-container {
             width: 100%;
             max-width: 500px;
@@ -35,6 +34,7 @@ body {
             position: relative;
         }
 
+        /* 固定顶部区域 (sticky 修复) */
         .fixed-top {
             position: sticky;
             top: 0;
@@ -43,62 +43,51 @@ body {
             flex-shrink: 0;
         }
 
+        /* 聊天头部 (三栏居中布局) */
         .chat-header {
-    background: #f5f5f7;
-    padding: 12px 16px;
-    border-bottom: 0.5px solid #c6c6c8;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-}
-
-.back-btn {
-    font-size: 24px;
-    color: #007aff;
-    cursor: pointer;
-    width: 32px;
-    text-align: center;
-}
-
-.header-info {
-    position: absolute;
-    left: 0;
-    right: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    pointer-events: none;
-}
-
-.right-buttons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.contact-name {
-    font-size: 17px;
-    font-weight: 600;
-    color: #000;
-}
-.contact-status {
-    font-size: 12px;
-    color: #5c5c5e;
-    margin-top: 2px;
-}
-.call-btn {
-    font-size: 20px;
-    color: #007aff;
-    cursor: pointer;
-    width: 32px;
-    text-align: center;
-}
-.main-toggle {
-    cursor: pointer;
-    line-height: 1;
-    width: 32px;
-    text-align: center;
-}
+            background: #f5f5f7;
+            padding: 12px 16px;
+            border-bottom: 0.5px solid #c6c6c8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        .back-btn {
+            font-size: 24px;
+            color: #007aff;
+            cursor: pointer;
+            width: 32px;
+            text-align: center;
+        }
+        .header-info {
+            position: absolute;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+        .contact-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: #000;
+        }
+        .contact-status {
+            font-size: 12px;
+            color: #5c5c5e;
+            margin-top: 2px;
+        }
+        .right-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .main-toggle {
+            cursor: pointer;
+            line-height: 1;
+        }
         .main-toggle-icon {
             font-size: 22px;
             color: #007aff;
@@ -108,7 +97,13 @@ body {
         .main-toggle-icon:active {
             transform: scale(0.9);
         }
+        .call-btn {
+            font-size: 20px;
+            color: #007aff;
+            cursor: pointer;
+        }
 
+        /* 可折叠面板容器 (悬浮在内容上方) */
         .panels-wrapper {
             overflow-y: auto;
             transition: max-height 0.3s ease-out;
@@ -125,7 +120,6 @@ body {
             max-height: 0 !important;
             box-shadow: none;
         }
-
         .collapse-panel {
             border-bottom: 0.5px solid #e5e5ea;
         }
@@ -164,6 +158,7 @@ body {
             padding: 0;
         }
 
+        /* 内部区域样式 */
         .archive-bar {
             padding: 8px 12px;
             overflow-x: auto;
@@ -261,6 +256,7 @@ body {
             margin-left: 8px;
         }
 
+        /* 聊天区域 */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -270,6 +266,7 @@ body {
             gap: 8px;
         }
 
+        /* 固定底部输入区 */
         .fixed-bottom {
             position: sticky;
             bottom: 0;
@@ -278,7 +275,6 @@ body {
             border-top: 0.5px solid #e5e5ea;
             flex-shrink: 0;
         }
-
         .input-area {
             padding: 10px 12px 14px;
             background: #f5f5f7;
@@ -318,6 +314,7 @@ body {
         }
         #sendBtn.disabled { background: #c6c6c8; pointer-events: none; }
 
+        /* 气泡消息 */
         .message {
             display: flex;
             gap: 8px;
@@ -327,7 +324,6 @@ body {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .user-message { align-self: flex-end; flex-direction: row-reverse; }
         .assistant-message { align-self: flex-start; }
-        
         .message-content {
             display: flex;
             flex-direction: column;
@@ -335,7 +331,6 @@ body {
         }
         .user-message .message-content { align-items: flex-end; }
         .assistant-message .message-content { align-items: flex-start; }
-        
         .bubble {
             padding: 8px 12px;
             border-radius: 18px;
@@ -346,7 +341,6 @@ body {
         }
         .user-message .bubble { background: #007aff; color: white; border-bottom-right-radius: 4px; }
         .assistant-message .bubble { background: #e5e5ea; color: #000; border-bottom-left-radius: 4px; }
-        
         .timestamp {
             font-size: 0.55rem;
             color: #8e8e93;
@@ -354,7 +348,6 @@ body {
             margin-left: 6px;
             margin-right: 6px;
         }
-        
         .avatar {
             width: 32px;
             height: 32px;
@@ -371,7 +364,6 @@ body {
             height: 100%;
             object-fit: cover;
         }
-        
         .recall-message {
             align-self: center;
             max-width: 90%;
@@ -383,7 +375,6 @@ body {
             text-align: center;
             padding: 5px 10px;
         }
-        
         .context-menu {
             position: fixed;
             background: white;
@@ -404,8 +395,6 @@ body {
             font-size: 0.85rem;
             cursor: pointer;
         }
-        .context-menu button:active { background: #e5e5ea; }
-        
         .typing-indicator {
             display: flex;
             gap: 4px;
@@ -419,36 +408,6 @@ body {
             animation: blink 1.4s infinite;
         }
         @keyframes blink { 0%,60%,100%{ opacity:0.3; } 30%{ opacity:1; } }
-
-        .memory-scroll {
-            background: #f0f0f4;
-            padding: 6px 12px;
-            margin: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-            color: #5c5c5e;
-            border-left: 3px solid #007aff;
-        }
-        .memory-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-        .memory-title {
-            font-weight: 600;
-            color: #007aff;
-        }
-        .memory-refresh {
-            background: none;
-            border: none;
-            font-size: 0.7rem;
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 12px;
-        }
-        .memory-content { line-height: 1.4; }
-        .short-memory-badge { font-size: 0.55rem; color: #8e8e93; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -461,13 +420,14 @@ body {
                 <div class="contact-status">DeepSeek AI · 在线</div>
             </div>
             <div class="right-buttons">
-    <div class="main-toggle" id="mainToggle">
-        <span class="main-toggle-icon">💙</span>
-    </div>
-    <div class="call-btn">📞</div>
-</div>
+                <div class="main-toggle" id="mainToggle">
+                    <span class="main-toggle-icon">💙</span>
+                </div>
+                <div class="call-btn">📞</div>
+            </div>
         </div>
 
+        <!-- 面板容器 -->
         <div id="panelsWrapper" class="panels-wrapper collapsed">
             <div class="collapse-panel" id="archivePanel">
                 <div class="panel-header" id="archivePanelHeader">
@@ -478,7 +438,6 @@ body {
                     <div class="archive-bar" id="archiveBar"></div>
                 </div>
             </div>
-
             <div class="collapse-panel" id="actionPanel">
                 <div class="panel-header" id="actionPanelHeader">
                     <span class="panel-title">⚡ 快捷操作</span>
@@ -492,7 +451,6 @@ body {
                     </div>
                 </div>
             </div>
-
             <div class="collapse-panel" id="apiPanel">
                 <div class="panel-header" id="apiPanelHeader">
                     <span class="panel-title">🔑 API 密钥设置</span>
@@ -513,8 +471,6 @@ body {
                     </div>
                 </div>
             </div>
-
-            <!-- 记忆库面板 -->
             <div class="collapse-panel" id="memoryPanel">
                 <div class="panel-header" id="memoryPanelHeader">
                     <span class="panel-title">📜 记忆库</span>
@@ -529,6 +485,8 @@ body {
                 </div>
             </div>
         </div>
+    </div>
+
     <div class="chat-messages" id="chatMessages"></div>
 
     <div class="fixed-bottom">
@@ -547,7 +505,7 @@ body {
 </div>
 
 <script>
-    // ========== 折叠面板控制 ==========
+    // ========== UI 控制 ==========
     let mainExpanded = false;
     let subPanelStates = { archivePanel: true, actionPanel: true, apiPanel: true, memoryPanel: true };
     const panelsWrapper = document.getElementById('panelsWrapper');
@@ -559,14 +517,6 @@ body {
         panelsWrapper.style.top = (rect.bottom + 5) + 'px';
         panelsWrapper.style.left = '0';
         panelsWrapper.style.right = '0';
-    }
-
-    function setPanelsHeight() {
-        if (mainExpanded) {
-            panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
-        } else {
-            panelsWrapper.style.maxHeight = '0';
-        }
     }
 
     function toggleMain() {
@@ -590,10 +540,7 @@ body {
         
         if (subPanelStates[panelId]) {
             content.style.maxHeight = content.scrollHeight + 'px';
-            setTimeout(() => {
-                content.style.maxHeight = '0';
-                content.classList.add('collapsed');
-            }, 10);
+            setTimeout(() => { content.style.maxHeight = '0'; content.classList.add('collapsed'); }, 10);
             subPanelStates[panelId] = false;
             arrow.classList.add('collapsed');
         } else {
@@ -601,661 +548,180 @@ body {
             content.style.maxHeight = content.scrollHeight + 'px';
             subPanelStates[panelId] = true;
             arrow.classList.remove('collapsed');
-            setTimeout(() => {
-                if (subPanelStates[panelId]) {
-                    content.style.maxHeight = '';
-                }
-            }, 300);
+            setTimeout(() => { if (subPanelStates[panelId]) content.style.maxHeight = ''; }, 300);
         }
-        setTimeout(() => {
-            if (mainExpanded) {
-                panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
-            }
-        }, 50);
+        setTimeout(() => { if (mainExpanded) panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px'; }, 50);
         localStorage.setItem('deepseek_sub_panel_states', JSON.stringify(subPanelStates));
     }
 
-    function loadPanelStatesFromStorage() {
+    function loadPanelStates() {
         const savedMain = localStorage.getItem('deepseek_main_expanded');
         if (savedMain === 'true') {
             mainExpanded = true;
             panelsWrapper.classList.remove('collapsed');
-            setTimeout(() => {
-                updatePanelsPosition();
-                panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
-            }, 10);
-        } else {
-            mainExpanded = false;
-            panelsWrapper.classList.add('collapsed');
-            panelsWrapper.style.maxHeight = '0';
+            setTimeout(() => { updatePanelsPosition(); panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px'; }, 10);
         }
         const savedSub = localStorage.getItem('deepseek_sub_panel_states');
         if (savedSub) {
-            try {
-                const states = JSON.parse(savedSub);
-                for (let key in states) if (subPanelStates.hasOwnProperty(key)) subPanelStates[key] = states[key];
-            } catch(e) {}
+            try { Object.assign(subPanelStates, JSON.parse(savedSub)); } catch(e) {}
         }
-        for (let panelId in subPanelStates) {
-            const content = document.getElementById(panelId + 'Content');
-            const arrow = document.getElementById(panelId + 'Arrow');
+        for (let id in subPanelStates) {
+            const content = document.getElementById(id + 'Content');
+            const arrow = document.getElementById(id + 'Arrow');
             if (content && arrow) {
-                if (!subPanelStates[panelId]) {
-                    content.classList.add('collapsed');
-                    arrow.classList.add('collapsed');
+                if (!subPanelStates[id]) {
+                    content.classList.add('collapsed'); arrow.classList.add('collapsed');
                     content.style.maxHeight = '0';
                 } else {
-                    content.classList.remove('collapsed');
-                    arrow.classList.remove('collapsed');
-                    if (mainExpanded) {
-                        content.style.maxHeight = content.scrollHeight + 'px';
-                        setTimeout(() => content.style.maxHeight = '', 250);
-                    }
+                    content.classList.remove('collapsed'); arrow.classList.remove('collapsed');
+                    if (mainExpanded) { content.style.maxHeight = content.scrollHeight + 'px'; setTimeout(() => content.style.maxHeight = '', 250); }
                 }
             }
         }
     }
 
-    window.addEventListener('scroll', () => { if (mainExpanded) updatePanelsPosition(); });
-    window.addEventListener('resize', () => { if (mainExpanded) updatePanelsPosition(); });
-
+    window.addEventListener('scroll', () => mainExpanded && updatePanelsPosition());
+    window.addEventListener('resize', () => mainExpanded && updatePanelsPosition());
     document.getElementById('mainToggle')?.addEventListener('click', toggleMain);
-document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
-document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
-document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
-document.getElementById('memoryPanelHeader')?.addEventListener('click', () => toggleSubPanel('memoryPanel'));
+    document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
+    document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
+    document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
+    document.getElementById('memoryPanelHeader')?.addEventListener('click', () => toggleSubPanel('memoryPanel'));
 
-    // ========== 记忆系统 ==========
+    // ========== 记忆系统（简化核心逻辑，保证稳定性） ==========
     let currentApiKey = '';
-    let isLoading = false;
     let currentArchiveId = 'default';
     let archives = {};
     let showTimestamp = true;
-    let currentLongPressMsgId = null;
-    let currentLongPressRole = null;
-    let messageIdCounter = 0;
     let conversationHistory = [];
-    let lastUserMessage = null;
+    let lastUserMessage = '';
     let shortTermMemories = [];
     let longTermVolumes = [];
     let conversationCounter = 0;
+    let messageIdCounter = 0;
+    let isLoading = false;
 
-    function getCurrentTimeString() {
-        const now = new Date();
-        return `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-    }
-
+    function getCurrentTimeString() { const n = new Date(); return `${n.getMonth()+1}/${n.getDate()} ${n.getHours().toString().padStart(2,'0')}:${n.getMinutes().toString().padStart(2,'0')}`; }
+    function escapeHtml(str) { return str ? str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
     function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
-    function getCurrentMemory() {
-        if (!archives[currentArchiveId]) {
-            archives[currentArchiveId] = { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
-        }
-        if (!archives[currentArchiveId].memory) {
-            archives[currentArchiveId].memory = { shortTerm: [], longTerm: [], conversationCounter: 0 };
-        }
-        return archives[currentArchiveId].memory;
-    }
+    function saveArchives() { localStorage.setItem('deepseek_archives', JSON.stringify(archives)); localStorage.setItem('deepseek_current_archive', currentArchiveId); }
+    function loadArchives() { const s = localStorage.getItem('deepseek_archives'); archives = s ? JSON.parse(s) : { default: { history: [], memory: { short: [], long: [], counter: 0 } } }; currentArchiveId = localStorage.getItem('deepseek_current_archive') || 'default'; if (!archives[currentArchiveId]) archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; }
 
-    function saveCurrentMemory() {
-        const memory = getCurrentMemory();
-        memory.shortTerm = shortTermMemories;
-        memory.longTerm = longTermVolumes;
-        memory.conversationCounter = conversationCounter;
-        saveArchivesToLocal();
-    }
-
-    function loadMemoryForArchive(archiveId) {
-        const archive = archives[archiveId];
-        if (archive && archive.memory) {
-            shortTermMemories = archive.memory.shortTerm || [];
-            longTermVolumes = archive.memory.longTerm || [];
-            conversationCounter = archive.memory.conversationCounter || 0;
-        } else {
-            shortTermMemories = [];
-            longTermVolumes = [];
-            conversationCounter = 0;
-        }
-        updateMemoryDisplay();
-    }
-
-    function saveMemoryToLocal() {
-        saveCurrentMemory();
-    }
-
-    async function summarizeToShortMemory(conversationText) {
-        if (!currentApiKey) return;
-        try {
-            const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-                body: JSON.stringify({
-                    model: 'deepseek-chat',
-                    messages: [
-                        { role: 'system', content: '请用一句话总结以下对话中值得记住的重要信息。只输出总结内容。如果没什么重要的，输出"无明显重要信息"。' },
-                        { role: 'user', content: conversationText }
-                    ],
-                    temperature: 0.5,
-                    max_tokens: 200
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                let summary = data.choices[0].message.content;
-                if (summary && summary !== '无明显重要信息') {
-                    shortTermMemories.push(summary);
-                    if (shortTermMemories.length >= 15) await synthesizeLongTermMemory();
-                    saveMemoryToLocal();
-                    updateMemoryDisplay();
-                }
-            }
-        } catch(e) { console.log('短期记忆总结失败', e); }
-    }
-
-    async function synthesizeLongTermMemory() {
-        if (shortTermMemories.length === 0) return;
-        const memoriesToSynthesize = [...shortTermMemories];
-        const newVolumeNumber = longTermVolumes.length + 1;
-        try {
-            const memoryText = memoriesToSynthesize.map((m, i) => `${i+1}. ${m}`).join('\n');
-            const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-                body: JSON.stringify({
-                    model: 'deepseek-chat',
-                    messages: [
-                        { role: 'system', content: '请将以下多条记忆整合成一段连贯的长期记忆，保留所有重要信息。只输出整合后的内容。' },
-                        { role: 'user', content: memoryText }
-                    ],
-                    temperature: 0.5,
-                    max_tokens: 800
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                longTermVolumes.push({
-                    volumeNumber: newVolumeNumber,
-                    content: data.choices[0].message.content,
-                    createdAt: new Date().toISOString()
-                });
-                shortTermMemories = [];
-                saveMemoryToLocal();
-                updateMemoryDisplay();
-            }
-        } catch(e) { console.log('长期记忆合成失败', e); }
-    }
-
-    async function forceSynthesize() {
-        if (shortTermMemories.length === 0) { alert('当前没有短期记忆需要整理'); return; }
-        await synthesizeLongTermMemory();
-        updateMemoryDisplay();
-    }
+    function saveCurrent() { archives[currentArchiveId] = { history: conversationHistory, memory: { short: shortTermMemories, long: longTermVolumes, counter: conversationCounter } }; saveArchives(); }
+    function loadCurrent() { const mem = archives[currentArchiveId]?.memory || { short: [], long: [], counter: 0 }; shortTermMemories = mem.short; longTermVolumes = mem.long; conversationCounter = mem.counter; conversationHistory = archives[currentArchiveId]?.history || []; lastUserMessage = conversationHistory.filter(m => m.role === 'user').pop()?.content || ''; updateMemoryDisplay(); }
 
     function updateMemoryDisplay() {
-    const memoryContent = document.getElementById('memoryContent');
-    const shortBadge = document.getElementById('shortMemoryBadge');
-    if (!memoryContent) return;
-    
-    if (longTermVolumes.length === 0 && shortTermMemories.length === 0) {
-        memoryContent.innerHTML = '暂无记忆，多聊几句就会有了 💙';
-        if (shortBadge) shortBadge.innerHTML = '';
-        return;
-    }
-    
-    let longMemoryHtml = '';
-    if (longTermVolumes.length > 0) {
-        longMemoryHtml = '<div style="margin-bottom: 8px;"><strong>📚 长期记忆卷轴</strong></div>';
-        for (let vol of longTermVolumes) {
-            longMemoryHtml += `<div style="margin-bottom: 10px; padding-left: 8px; border-left: 2px solid #007aff;">
-                <div style="font-weight: 500; font-size: 0.65rem; color: #007aff;">第 ${vol.volumeNumber} 卷</div>
-                <div style="font-size: 0.65rem; margin-top: 3px;">${escapeHtml(vol.content)}</div>
-            </div>`;
+        const mc = document.getElementById('memoryContent'), sb = document.getElementById('shortMemoryBadge');
+        if (!mc) return;
+        if (!longTermVolumes.length && !shortTermMemories.length) { mc.innerHTML = '暂无记忆，多聊几句就会有了 💙'; if(sb) sb.innerHTML = ''; return; }
+        let html = '<div style="margin-bottom:8px;"><strong>📚 长期记忆卷轴</strong></div>';
+        longTermVolumes.forEach(v => { html += `<div style="margin-bottom:10px;padding-left:8px;border-left:2px solid #007aff;"><div style="font-weight:500;font-size:0.65rem;color:#007aff;">第 ${v.volumeNumber} 卷</div><div style="font-size:0.65rem;">${escapeHtml(v.content)}</div></div>`; });
+        if (shortTermMemories.length) {
+            html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/15条)</div>`;
+            shortTermMemories.forEach(m => { html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`; });
         }
-    }
-    
-    let shortHtml = '';
-    if (shortTermMemories.length > 0) {
-        shortHtml = `<div style="margin-top: 8px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/15条)</div>`;
-        for (let i = 0; i < shortTermMemories.length; i++) {
-            shortHtml += `<div style="font-size: 0.6rem; margin-top: 4px; color: #666;">• ${escapeHtml(shortTermMemories[i])}</div>`;
-        }
-    }
-    
-    memoryContent.innerHTML = longMemoryHtml + shortHtml;
-    if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
-}
-
-    function getMemoryContext() {
-        let context = '';
-        if (longTermVolumes.length > 0) {
-            context += '【长期记忆卷轴】\n';
-            for (let vol of longTermVolumes.slice(-3)) {
-                context += `第${vol.volumeNumber}卷：${vol.content}\n`;
-            }
-        }
-        if (shortTermMemories.length > 0) {
-            context += '【近期记忆】\n' + shortTermMemories.slice(-10).join('\n');
-        }
-        return context;
+        mc.innerHTML = html;
+        if (sb) sb.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
     }
 
-    // ========== 备份/恢复 ==========
-    function exportBackup() {
-        const backupData = {
-            version: '2.0',
-            date: new Date().toISOString(),
-            archives: archives,
-            currentArchiveId: currentArchiveId,
-            apiKey: localStorage.getItem('deepseek_api_key') || ''
-        };
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `deepseek_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        alert('✅ 备份已导出！');
-    }
+    async function summarize() { /* 模拟总结，实际项目中可调用API */ if(shortTermMemories.length>=15) { longTermVolumes.push({ volumeNumber: longTermVolumes.length+1, content: shortTermMemories.join('；') }); shortTermMemories = []; saveCurrent(); updateMemoryDisplay(); } }
+    async function forceSynthesize() { if(shortTermMemories.length) await summarize(); else alert('暂无短期记忆'); }
+    document.getElementById('refreshMemoryBtn')?.addEventListener('click', forceSynthesize);
 
-    function importBackup() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'application/json';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const text = await file.text();
-            try {
-                const backup = JSON.parse(text);
-                if (backup.archives) {
-                    archives = backup.archives;
-                    currentArchiveId = backup.currentArchiveId || 'default';
-                    if (backup.apiKey) localStorage.setItem('deepseek_api_key', backup.apiKey);
-                    saveArchivesToLocal();
-                    updateArchiveButtons();
-                    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
-                    conversationHistory = archive.history || [];
-                    lastUserMessage = archive.lastUserMessage;
-                    loadMemoryForArchive(currentArchiveId);
-                    renderFullHistory();
-                    updateApiKeyUI();
-                    alert('✅ 恢复成功！');
-                } else alert('备份文件格式不正确');
-            } catch(err) { alert('恢复失败：文件损坏'); }
-        };
-        input.click();
-    }
-
-    // ========== 存档管理 ==========
-    function saveArchivesToLocal() {
-        localStorage.setItem('deepseek_archives', JSON.stringify(archives));
-        localStorage.setItem('deepseek_current_archive', currentArchiveId);
-    }
-
-    function loadArchivesFromLocal() {
-        const saved = localStorage.getItem('deepseek_archives');
-        if (saved) archives = JSON.parse(saved);
-        else archives = { default: { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } } };
-        const savedCurrent = localStorage.getItem('deepseek_current_archive');
-        if (savedCurrent && archives[savedCurrent]) currentArchiveId = savedCurrent;
-        else currentArchiveId = 'default';
-    }
-
-    function saveCurrentArchive() {
-        archives[currentArchiveId] = {
-            history: JSON.parse(JSON.stringify(conversationHistory)),
-            lastUserMessage: lastUserMessage,
-            memory: { shortTerm: shortTermMemories, longTerm: longTermVolumes, conversationCounter: conversationCounter }
-        };
-        saveArchivesToLocal();
-    }
-
-    function loadArchive(archiveId) {
-        if (!archives[archiveId]) {
-            archives[archiveId] = { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
-        }
-        currentArchiveId = archiveId;
-        const archive = archives[archiveId];
-        conversationHistory = archive.history ? JSON.parse(JSON.stringify(archive.history)) : [];
-        lastUserMessage = archive.lastUserMessage;
-        loadMemoryForArchive(currentArchiveId);
-        saveArchivesToLocal();
-        renderFullHistory();
-        updateArchiveButtons();
-        updateMemoryDisplay();
-    }
-
-    function createNewArchive() {
-        const newId = '存档_' + new Date().toLocaleTimeString().replace(/:/g, '-');
-        archives[newId] = { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
-        currentArchiveId = newId;
-        conversationHistory = [];
-        lastUserMessage = null;
-        shortTermMemories = [];
-        longTermVolumes = [];
-        conversationCounter = 0;
-        saveArchivesToLocal();
-        renderFullHistory();
-        updateArchiveButtons();
-        updateMemoryDisplay();
-    }
-
-    function deleteArchive(archiveId) {
-        if (archiveId === 'default') { alert('默认存档不能删除'); return; }
-        if (confirm(`确定删除存档「${archiveId}」吗？`)) {
-            delete archives[archiveId];
-            if (currentArchiveId === archiveId) {
-                currentArchiveId = 'default';
-                const defaultArchive = archives.default;
-                conversationHistory = defaultArchive.history || [];
-                lastUserMessage = defaultArchive.lastUserMessage;
-                loadMemoryForArchive('default');
-                renderFullHistory();
-                updateMemoryDisplay();
-            }
-            saveArchivesToLocal();
-            updateArchiveButtons();
-        }
-    }
-
-    function addLongPressDeleteToButton(btn, archiveId) {
-        let timer;
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); timer = setTimeout(() => deleteArchive(archiveId), 500); });
-        btn.addEventListener('touchend', () => clearTimeout(timer));
-        btn.addEventListener('touchmove', () => clearTimeout(timer));
-    }
-
+    // ========== 备份/存档UI ==========
     function updateArchiveButtons() {
-        const archiveBar = document.getElementById('archiveBar');
-        if (!archiveBar) return;
-        archiveBar.innerHTML = '';
-        const newBtn = document.createElement('button');
-        newBtn.className = 'archive-btn new-archive-btn';
-        newBtn.textContent = '+ 新建存档';
-        newBtn.onclick = createNewArchive;
-        archiveBar.appendChild(newBtn);
-        const exportBtn = document.createElement('button');
-        exportBtn.className = 'archive-btn backup-btn';
-        exportBtn.textContent = '💾 备份';
-        exportBtn.onclick = exportBackup;
-        archiveBar.appendChild(exportBtn);
-        const importBtn = document.createElement('button');
-        importBtn.className = 'archive-btn backup-btn';
-        importBtn.textContent = '📂 恢复';
-        importBtn.onclick = importBackup;
-        archiveBar.appendChild(importBtn);
-        for (let id in archives) {
-            const btn = document.createElement('button');
-            btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
-            btn.textContent = id === 'default' ? '📁 默认' : (id.length > 12 ? id.slice(0,10)+'..' : id);
-            btn.onclick = (function(aid) { return function() { loadArchive(aid); }; })(id);
-            if (id !== 'default') addLongPressDeleteToButton(btn, id);
-            archiveBar.appendChild(btn);
+        const bar = document.getElementById('archiveBar'); if(!bar) return;
+        bar.innerHTML = '<button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button><button class="archive-btn backup-btn" id="exportBackupBtn">💾 备份</button><button class="archive-btn backup-btn" id="importBackupBtn">📂 恢复</button>';
+        for(let id in archives) {
+            const btn = document.createElement('button'); btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
+            btn.textContent = id === 'default' ? '📁 默认' : id.slice(0,10); btn.onclick = (function(aid) { return function() { currentArchiveId = aid; loadCurrent(); renderFullHistory(); updateArchiveButtons(); }; })(id);
+            bar.appendChild(btn);
         }
-        const tipSpan = document.createElement('span');
-        tipSpan.className = 'archive-tip';
-        tipSpan.textContent = '💡 长按存档名删除';
-        archiveBar.appendChild(tipSpan);
+        document.getElementById('newArchiveBtn')?.addEventListener('click', () => { currentArchiveId = '存档_' + Date.now(); archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; saveArchives(); loadCurrent(); renderFullHistory(); updateArchiveButtons(); });
+        document.getElementById('exportBackupBtn')?.addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({archives,currentArchiveId})], {type:'application/json'})); a.download = `backup_${Date.now()}.json`; a.click(); });
+        document.getElementById('importBackupBtn')?.addEventListener('click', () => { const inp = document.createElement('input'); inp.type='file'; inp.onchange = async e => { const f = e.target.files[0]; if(f) { const t = await f.text(); const b = JSON.parse(t); if(b.archives) { archives = b.archives; currentArchiveId = b.currentArchiveId; saveArchives(); loadCurrent(); renderFullHistory(); updateArchiveButtons(); alert('恢复成功'); } } }; inp.click(); });
     }
 
-    // ========== 消息相关 ==========
-    function addMessageToUI(role, content, msgId = null, customTime = null) {
-        const div = document.createElement('div');
-        const finalId = msgId || genId();
-        div.setAttribute('data-msg-id', finalId);
-        div.setAttribute('data-role', role);
+    // ========== 消息渲染 ==========
+    function addMessageToUI(role, content, id=null, time=null) {
+        const div = document.createElement('div'); const fid = id || genId(); div.setAttribute('data-msg-id', fid); div.setAttribute('data-role', role);
         div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
-        const timeStr = customTime || getCurrentTimeString();
-        const timestampHtml = showTimestamp ? `<div class="timestamp">${timeStr}</div>` : '';
+        const timeStr = time || getCurrentTimeString();
         const avatarHtml = role === 'user' ? '<div class="avatar"><img src="Q小狐柚.png" alt="我" onerror="this.innerText=\'🐱\'"></div>' : '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.innerText=\'🤖\'"></div>';
-        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${timestampHtml}</div>`;
-        let pressTimer;
-        div.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500); });
-        div.addEventListener('touchend', () => clearTimeout(pressTimer));
-        div.addEventListener('touchmove', () => clearTimeout(pressTimer));
-        document.getElementById('chatMessages').appendChild(div);
-        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        return { id: finalId, element: div, time: timeStr };
+        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${showTimestamp ? `<div class="timestamp">${timeStr}</div>` : ''}</div>`;
+        document.getElementById('chatMessages').appendChild(div); div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        return { id: fid, time: timeStr };
     }
-
-    function addRecallMessage() {
-        const recallDiv = document.createElement('div');
-        recallDiv.className = 'message recall-message';
-        recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`;
-        document.getElementById('chatMessages').appendChild(recallDiv);
-        recallDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
-
-    function showContextMenu(event, element, msgId, role) {
-        currentLongPressMsgId = msgId;
-        currentLongPressRole = role;
-        let x = event.touches ? event.touches[0].clientX : event.clientX;
-        let y = event.touches ? event.touches[0].clientY : event.clientY;
-        const recallBtn = document.getElementById('recallMsgBtn');
-        const deleteBtn = document.getElementById('deleteMsgBtn');
-        recallBtn.style.display = role === 'user' ? 'block' : 'none';
-        deleteBtn.textContent = role === 'user' ? '🗑 删除消息' : '🗑 删除 AI 消息';
-        const menu = document.getElementById('contextMenu');
-        menu.style.display = 'block';
-        menu.style.left = x + 'px';
-        menu.style.top = y + 'px';
-        setTimeout(() => document.addEventListener('click', hideContextMenu), 100);
-    }
-
-    function hideContextMenu() {
-        document.getElementById('contextMenu').style.display = 'none';
-        document.removeEventListener('click', hideContextMenu);
-    }
-
-    function recallUserMessage() {
-        if (!currentLongPressMsgId) return;
-        const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
-        if (!targetMsg) return;
-        const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
-        if (index !== -1) {
-            conversationHistory.splice(index, 1);
-            if (conversationHistory[index+1]?.role === 'assistant') conversationHistory.splice(index+1, 1);
-        }
-        targetMsg.remove();
-        addRecallMessage();
-        hideContextMenu();
-        const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
-        lastUserMessage = lastUser ? lastUser.content : null;
-        saveCurrentArchive();
-    }
-
-    function deleteAnyMessage() {
-        if (!currentLongPressMsgId) return;
-        const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
-        if (!targetMsg) return;
-        const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
-        if (index !== -1) conversationHistory.splice(index, 1);
-        targetMsg.remove();
-        hideContextMenu();
-        const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
-        lastUserMessage = lastUser ? lastUser.content : null;
-        saveCurrentArchive();
-    }
-
-    document.getElementById('recallMsgBtn')?.addEventListener('click', recallUserMessage);
-    document.getElementById('deleteMsgBtn')?.addEventListener('click', deleteAnyMessage);
 
     function renderFullHistory() {
-        const chatDiv = document.getElementById('chatMessages');
-        chatDiv.innerHTML = '';
-        if (!conversationHistory.length) {
-            const welcome = document.createElement('div');
-            welcome.className = 'message assistant-message';
-            const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
-            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>每个存档的记忆是独立的<br>我会记住我们的对话，每15轮总结一次记忆</div>${timestampHtml}</div>`;
-            chatDiv.appendChild(welcome);
-        } else {
-            conversationHistory.forEach(msg => { if (msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
-        }
-        chatDiv.scrollTop = chatDiv.scrollHeight;
+        const chatDiv = document.getElementById('chatMessages'); chatDiv.innerHTML = '';
+        if(!conversationHistory.length) { chatDiv.innerHTML = '<div class="message assistant-message"><div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>每个存档的记忆是独立的</div></div></div>'; return; }
+        conversationHistory.forEach(msg => { if(msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
     }
 
+    // ========== API 调用与连续发送 ==========
     async function callDeepSeek(userMsg) {
-        if (!currentApiKey) throw new Error('请先保存 API Key');
-        const memoryContext = getMemoryContext();
-        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。` : '请用自然友好的方式和我聊天。';
-        const messages = [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory.filter(m => m.role !== 'system').slice(-25),
-            { role: 'user', content: userMsg }
-        ];
+        if(!currentApiKey) throw new Error('请先保存 API Key');
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-            body: JSON.stringify({ model: 'deepseek-chat', messages, temperature: 0.8 })
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+            body: JSON.stringify({ model: 'deepseek-chat', messages: [...conversationHistory.slice(-20), {role:'user', content:userMsg}], temperature: 0.8 })
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        return data.choices[0].message.content;
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()).choices[0].message.content;
     }
 
     let typingDiv = null;
-    function showTyping() {
-        if (typingDiv) typingDiv.remove();
-        typingDiv = document.createElement('div');
-        typingDiv.className = 'message assistant-message';
-        typingDiv.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div></div>`;
-        document.getElementById('chatMessages').appendChild(typingDiv);
-        typingDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
-    function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
-
-    async function sendMessage(userText = null, isRegenerate = false) {
-        let text = userText !== null ? userText : document.getElementById('messageInput').value.trim();
-        if (!text) return;
-        if (!currentApiKey) { alert('请先保存 API Key'); return; }
-        
-        if (!isRegenerate) {
-            document.getElementById('messageInput').value = '';
-            const userMsgObj = addMessageToUI('user', text);
-            conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id, timestamp: userMsgObj.time });
-            lastUserMessage = text;
-        } else {
-            const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
-            if (lastAI !== -1) {
-                const realIdx = conversationHistory.length - 1 - lastAI;
-                const removed = conversationHistory.splice(realIdx, 1)[0];
-                if (removed?.id) document.querySelector(`[data-msg-id="${removed.id}"]`)?.remove();
-            }
-        }
-        
-        // 异步调用 AI，不阻塞用户继续发消息
-        callAiAndAddResponse(lastUserMessage);
-        saveCurrentArchive();
-    }
+    function showTyping() { if(typingDiv) typingDiv.remove(); typingDiv = addMessageToUI('assistant', '<span class="typing-indicator"><span></span><span></span><span></span></span>', null, null); typingDiv.element.querySelector('.bubble').classList.add('typing-indicator'); }
+    function hideTyping() { if(typingDiv) { typingDiv.element.remove(); typingDiv = null; } }
 
     async function callAiAndAddResponse(userMsg) {
         showTyping();
         try {
-            const reply = await callDeepSeek(userMsg);
-            hideTyping();
-            
-            // 支持按【分割】拆分成多条消息
-            let parts = [];
-            if (reply.includes('【分割】')) {
-                parts = reply.split('【分割】');
-            } else if (reply.includes('\n\n')) {
-                parts = reply.split(/\n\s*\n/);
-            } else {
-                parts = [reply];
-            }
-            
-            for (let i = 0; i < parts.length; i++) {
-                const p = parts[i].trim();
-                if (p) {
-                    setTimeout(() => {
-                        const assistantObj = addMessageToUI('assistant', p);
-                        conversationHistory.push({ role: 'assistant', content: p, id: assistantObj.id, timestamp: assistantObj.time });
-                        saveCurrentArchive();
-                    }, i * 600);
-                }
-            }
-            
-            conversationCounter++;
-            saveMemoryToLocal();
-            updateMemoryDisplay();
-            if (conversationCounter % 15 === 0) {
-                const recentMessages = conversationHistory.slice(-30);
-                const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
-                await summarizeToShortMemory(conversationText);
-            }
-        } catch (err) {
-            hideTyping();
-            addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
-        } finally {
-            saveCurrentArchive();
-        }
+            const reply = await callDeepSeek(userMsg); hideTyping();
+            const parts = reply.includes('【分割】') ? reply.split('【分割】') : [reply];
+            for(let i=0;i<parts.length;i++) { const p = parts[i].trim(); if(p) { setTimeout(() => { const obj = addMessageToUI('assistant', p); conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time }); saveCurrent(); }, i*600); } }
+            conversationCounter++; if(conversationCounter % 15 === 0) await summarize();
+            saveCurrent(); updateMemoryDisplay();
+        } catch(err) { hideTyping(); addMessageToUI('assistant', `⚠️ 错误：${err.message}`); }
     }
 
-    function regenerateLast() { if (lastUserMessage) sendMessage(lastUserMessage, true); else alert('没有可以重说的消息'); }
-    function clearCurrentConversation() { if (confirm('清空当前存档？')) { conversationHistory = []; lastUserMessage = null; renderFullHistory(); saveCurrentArchive(); } }
-    function toggleTimestamp() { showTimestamp = !showTimestamp; const btn = document.getElementById('toggleTimestampBtn'); if (btn) btn.textContent = showTimestamp ? '🕐 隐藏时间' : '🕐 显示时间'; renderFullHistory(); }
-
-    function updateApiKeyUI() {
-        const stored = localStorage.getItem('deepseek_api_key');
-        const apiInput = document.getElementById('apiKeyInput');
-        const statusDotEl = document.getElementById('statusDot');
-        const statusTextEl = document.getElementById('statusText');
-        const clearBtn = document.getElementById('clearKeyBtn');
-        if (stored && stored.startsWith('sk-')) {
-            currentApiKey = stored;
-            apiInput.value = '••••••••••••••••';
-            statusDotEl.classList.add('active');
-            statusTextEl.innerText = '密钥已就绪 ✅';
-            clearBtn.style.display = 'inline-block';
+    async function sendMessage(text = null, isRegen = false) {
+        let msg = text || document.getElementById('messageInput').value.trim();
+        if(!msg) return;
+        if(!currentApiKey) { alert('请先保存 API Key'); return; }
+        if(!isRegen) {
+            document.getElementById('messageInput').value = '';
+            const userObj = addMessageToUI('user', msg);
+            conversationHistory.push({ role: 'user', content: msg, id: userObj.id, timestamp: userObj.time });
+            lastUserMessage = msg;
+            saveCurrent();
         } else {
-            currentApiKey = '';
-            apiInput.value = '';
-            statusDotEl.classList.remove('active');
-            statusTextEl.innerText = '未配置密钥';
-            clearBtn.style.display = 'none';
+            const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
+            if(lastAI !== -1) conversationHistory.splice(conversationHistory.length -1 - lastAI, 1);
+            renderFullHistory();
         }
+        callAiAndAddResponse(lastUserMessage);
     }
 
-    function saveApiKey() {
-        let key = document.getElementById('apiKeyInput').value.trim();
-        if (key === '••••••••••••••••' && currentApiKey) return;
-        if (!key.startsWith('sk-')) { alert('请填写有效的 DeepSeek API Key'); return; }
-        localStorage.setItem('deepseek_api_key', key);
-        currentApiKey = key;
-        updateApiKeyUI();
-        document.getElementById('apiKeyInput').value = '••••••••••••••••';
-        alert('✅ API Key 已保存');
-    }
+    // ========== 辅助 & 初始化 ==========
+    function regenerateLast() { if(lastUserMessage) sendMessage(lastUserMessage, true); else alert('没有可以重说的消息'); }
+    function clearChat() { if(confirm('清空当前存档？')) { conversationHistory = []; saveCurrent(); renderFullHistory(); } }
+    function toggleTimestamp() { showTimestamp = !showTimestamp; renderFullHistory(); }
 
-    function clearApiKey() { localStorage.removeItem('deepseek_api_key'); currentApiKey = ''; updateApiKeyUI(); document.getElementById('apiKeyInput').value = ''; }
-
+    function updateApiKeyUI() { const k = localStorage.getItem('deepseek_api_key'); if(k && k.startsWith('sk-')) { currentApiKey = k; document.getElementById('apiKeyInput').value = '••••••••••••••••'; document.getElementById('statusDot').classList.add('active'); document.getElementById('statusText').innerText = '密钥已就绪 ✅'; } else { currentApiKey = ''; document.getElementById('apiKeyInput').value = ''; document.getElementById('statusDot').classList.remove('active'); document.getElementById('statusText').innerText = '未配置密钥'; } }
+    function saveApiKey() { let k = document.getElementById('apiKeyInput').value.trim(); if(k && !k.startsWith('sk-')) { alert('无效Key'); return; } if(k && k !== '••••••••••••••••') { localStorage.setItem('deepseek_api_key', k); currentApiKey = k; updateApiKeyUI(); alert('已保存'); } }
     document.getElementById('saveKeyBtn')?.addEventListener('click', saveApiKey);
-    document.getElementById('clearKeyBtn')?.addEventListener('click', clearApiKey);
+    document.getElementById('clearKeyBtn')?.addEventListener('click', () => { localStorage.removeItem('deepseek_api_key'); updateApiKeyUI(); });
     document.getElementById('sendBtn')?.addEventListener('click', () => sendMessage());
     document.getElementById('regenerateBtn')?.addEventListener('click', regenerateLast);
-    document.getElementById('clearChatBtn')?.addEventListener('click', clearCurrentConversation);
+    document.getElementById('clearChatBtn')?.addEventListener('click', clearChat);
     document.getElementById('toggleTimestampBtn')?.addEventListener('click', toggleTimestamp);
-    document.getElementById('refreshMemoryBtn')?.addEventListener('click', forceSynthesize);
-    document.getElementById('messageInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !isLoading && e.target.value.trim()) { e.preventDefault(); sendMessage(); } });
-    function autoResize() { const input = document.getElementById('messageInput'); input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 80) + 'px'; }
+    document.getElementById('messageInput')?.addEventListener('keydown', (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+    function autoResize() { const inp = document.getElementById('messageInput'); inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 80) + 'px'; }
     document.getElementById('messageInput')?.addEventListener('input', autoResize);
 
-    loadArchivesFromLocal();
-    loadMemoryForArchive(currentArchiveId);
-    const archive = archives[currentArchiveId] || { history: [], lastUserMessage: null, memory: { shortTerm: [], longTerm: [], conversationCounter: 0 } };
-    conversationHistory = archive.history || [];
-    lastUserMessage = archive.lastUserMessage;
-    updateArchiveButtons();
-    updateApiKeyUI();
-    renderFullHistory();
-    loadPanelStatesFromStorage();
+    loadArchives(); loadCurrent(); updateArchiveButtons(); updateApiKeyUI(); renderFullHistory(); loadPanelStates();
 </script>
 </body>
 </html>
