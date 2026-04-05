@@ -31,13 +31,12 @@
         }
 
         .fixed-top {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: #ffffff;
-    flex-shrink: 0;
-    position: relative;  /* 新增这一行 */
-}
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
 
         .chat-header {
             background: #f5f5f7;
@@ -76,41 +75,37 @@
             cursor: pointer;
         }
 
-        /* 💙 图标行 - 放在备注栏下面，右上角，无白条 */
-        .toggle-row {
-            display: flex;
-            justify-content: flex-end;
-            padding: 8px 16px 8px 16px;
-            background: transparent;
-        }
+        /* 💙 图标样式 - 放在 📞 左边 */
         .main-toggle {
-    cursor: pointer;
-    line-height: 1;
-}
-.main-toggle-icon {
-    font-size: 22px;
-    color: #007aff;
-    transition: transform 0.1s ease;
-    display: inline-block;
-}
-.main-toggle-icon:active {
-    transform: scale(0.9);
-}
+            cursor: pointer;
+            line-height: 1;
+            margin-right: 8px;
+        }
+        .main-toggle-icon {
+            font-size: 22px;
+            color: #007aff;
+            transition: transform 0.1s ease;
+            display: inline-block;
+        }
+        .main-toggle-icon:active {
+            transform: scale(0.9);
+        }
 
-        /* 面板容器 - 包裹三个折叠栏，默认收起 */
+        /* 面板容器 - 固定定位，跟随 💙 位置 */
         .panels-wrapper {
             overflow: hidden;
             transition: max-height 0.3s ease-out;
             background: #ffffff;
-            position: absolute;  /* 新增：脱离文档流 */
+            position: fixed;
             left: 0;
             right: 0;
-            top: 100%;  /* 紧贴 💙 下方 */
             z-index: 99;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 0 0 12px 12px;
         }
         .panels-wrapper.collapsed {
             max-height: 0 !important;
+            box-shadow: none;
         }
 
         .collapse-panel {
@@ -441,18 +436,18 @@
 <div class="app-container">
     <div class="fixed-top">
         <div class="chat-header">
-    <div class="back-btn" onclick="history.back()">←</div>
-    <div class="header-info">
-        <div class="contact-name">A_d老师111</div>
-        <div class="contact-status">DeepSeek AI · 在线</div>
-    </div>
-    <div class="main-toggle" id="mainToggle" style="margin-right: 8px;">
-        <span class="main-toggle-icon">💙</span>
-    </div>
-    <div class="call-btn">📞</div>
-</div>
+            <div class="back-btn" onclick="history.back()">←</div>
+            <div class="header-info">
+                <div class="contact-name">A_d老师111</div>
+                <div class="contact-status">DeepSeek AI · 在线</div>
+            </div>
+            <div class="main-toggle" id="mainToggle">
+                <span class="main-toggle-icon">💙</span>
+            </div>
+            <div class="call-btn">📞</div>
+        </div>
 
-        <!-- 面板容器放在 💙 上面 -->
+        <!-- 面板容器 -->
         <div id="panelsWrapper" class="panels-wrapper collapsed">
             <div class="collapse-panel" id="archivePanel">
                 <div class="panel-header" id="archivePanelHeader">
@@ -499,8 +494,7 @@
                 </div>
             </div>
         </div>
-
-        
+    </div>
 
     <div id="memoryScrollArea" class="memory-scroll" style="display: none;">
         <div class="memory-header">
@@ -535,6 +529,15 @@
 
     const panelsWrapper = document.getElementById('panelsWrapper');
 
+    function updatePanelsPosition() {
+        const toggleIcon = document.getElementById('mainToggle');
+        if (!toggleIcon) return;
+        const rect = toggleIcon.getBoundingClientRect();
+        panelsWrapper.style.top = (rect.bottom + 5) + 'px';
+        panelsWrapper.style.left = '0';
+        panelsWrapper.style.right = '0';
+    }
+
     function setPanelsHeight() {
         if (mainExpanded) {
             panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
@@ -546,8 +549,9 @@
     function toggleMain() {
         mainExpanded = !mainExpanded;
         if (mainExpanded) {
+            updatePanelsPosition();
             panelsWrapper.classList.remove('collapsed');
-            setPanelsHeight();
+            panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
         } else {
             panelsWrapper.classList.add('collapsed');
             panelsWrapper.style.maxHeight = '0';
@@ -594,6 +598,7 @@
             mainExpanded = true;
             panelsWrapper.classList.remove('collapsed');
             setTimeout(() => {
+                updatePanelsPosition();
                 panelsWrapper.style.maxHeight = panelsWrapper.scrollHeight + 'px';
             }, 10);
         } else {
@@ -627,6 +632,19 @@
             }
         }
     }
+
+    // 监听滚动，更新面板位置
+    window.addEventListener('scroll', () => {
+        if (mainExpanded) {
+            updatePanelsPosition();
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (mainExpanded) {
+            updatePanelsPosition();
+        }
+    });
 
     document.getElementById('mainToggle')?.addEventListener('click', toggleMain);
     document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
