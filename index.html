@@ -807,23 +807,32 @@
 
     // ========== API 调用（支持灵活发送） ==========
     async function callDeepSeek(userMsg) {
-        if(!currentApiKey) throw new Error('请先保存 API Key');
-        const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-            body: JSON.stringify({ 
-                model: 'deepseek-chat', 
-                messages: [
-                    { role: 'system', content: '你可以用【分割】来把一条回复拆成多条短消息依次发送。例如：第一条消息【分割】第二条消息【分割】第三条消息。如果不加【分割】，就会发一条完整的长消息。请用自然的口语聊天。' },
-                    ...conversationHistory.slice(-20), 
-                    { role: 'user', content: userMsg }
-                ], 
-                temperature: 0.8 
-            })
-        });
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()).choices[0].message.content;
-    }
+    if(!currentApiKey) throw new Error('请先保存 API Key');
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+        body: JSON.stringify({ 
+            model: 'deepseek-chat', 
+            messages: [
+                { role: 'system', content: `你是我的AI助手。请根据情况灵活选择回复方式：
+
+1. 如果想一口气说一段完整的话（比如解释事情、讲道理、分享想法），就正常写，不要加任何标记。
+
+2. 如果想营造真人聊天的感觉，把一句话拆成几条短消息依次发送，就在每条短消息之间加上【分割】。例如：
+   "哈哈真的吗【分割】我也这么觉得【分割】那你后来怎么想的？"
+
+3. 如果只是普通聊天，一般不用【分割】，自然说话就行。
+
+记住：【分割】是用来把一条回复变成多条短消息的工具，不是必须用的。请自然地和我聊天。` },
+                ...conversationHistory.slice(-20), 
+                { role: 'user', content: userMsg }
+            ], 
+            temperature: 0.8 
+        })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return (await res.json()).choices[0].message.content;
+}
 
     let typingDiv = null;
     function showTyping() {
