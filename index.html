@@ -92,21 +92,23 @@
         }
 
         /* 面板容器 - 固定定位，跟随 💙 位置 */
-        .panels-wrapper {
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background: #ffffff;
-            position: fixed;
-            left: 0;
-            right: 0;
-            z-index: 99;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-radius: 0 0 12px 12px;
-        }
-        .panels-wrapper.collapsed {
-            max-height: 0 !important;
-            box-shadow: none;
-        }
+        /* 面板容器 - 固定定位，浮在内容上方 */
+.panels-wrapper {
+    overflow-y: auto;
+    transition: max-height 0.3s ease-out;
+    background: #ffffff;
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 0 0 16px 16px;
+    max-height: 60vh;
+}
+.panels-wrapper.collapsed {
+    max-height: 0 !important;
+    box-shadow: none;
+}
 
         .collapse-panel {
             border-bottom: 0.5px solid #e5e5ea;
