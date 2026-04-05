@@ -81,17 +81,18 @@
             background: transparent;
         }
         .main-toggle {
-            cursor: pointer;
-        }
-        .main-toggle-icon {
-            font-size: 24px;
-            color: #007aff;
-            transition: transform 0.1s ease;
-            display: inline-block;
-        }
-        .main-toggle-icon:active {
-            transform: scale(0.9);
-        }
+    cursor: pointer;
+    line-height: 1;
+}
+.main-toggle-icon {
+    font-size: 22px;
+    color: #007aff;
+    transition: transform 0.1s ease;
+    display: inline-block;
+}
+.main-toggle-icon:active {
+    transform: scale(0.9);
+}
 
         /* 面板容器 - 包裹三个折叠栏，默认收起 */
         .panels-wrapper {
@@ -437,13 +438,16 @@
 <div class="app-container">
     <div class="fixed-top">
         <div class="chat-header">
-            <div class="back-btn" onclick="history.back()">←</div>
-            <div class="header-info">
-                <div class="contact-name">A_d老师111</div>
-                <div class="contact-status">DeepSeek AI · 在线</div>
-            </div>
-            <div class="call-btn">📞</div>
-        </div>
+    <div class="back-btn" onclick="history.back()">←</div>
+    <div class="header-info">
+        <div class="contact-name">A_d老师111</div>
+        <div class="contact-status">DeepSeek AI · 在线</div>
+    </div>
+    <div class="main-toggle" id="mainToggle" style="margin-right: 8px;">
+        <span class="main-toggle-icon">💙</span>
+    </div>
+    <div class="call-btn">📞</div>
+</div>
 
         <!-- 面板容器放在 💙 上面 -->
         <div id="panelsWrapper" class="panels-wrapper collapsed">
@@ -493,13 +497,7 @@
             </div>
         </div>
 
-        <!-- 💙 图标行放在面板下面 -->
-        <div class="toggle-row">
-            <div class="main-toggle" id="mainToggle">
-                <span class="main-toggle-icon">💙</span>
-            </div>
-        </div>
-    </div>
+        
 
     <div id="memoryScrollArea" class="memory-scroll" style="display: none;">
         <div class="memory-header">
