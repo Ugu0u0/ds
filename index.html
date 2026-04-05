@@ -75,7 +75,6 @@
             cursor: pointer;
         }
 
-        /* 💙 图标样式 - 放在 📞 左边 */
         .main-toggle {
             cursor: pointer;
             line-height: 1;
@@ -91,24 +90,22 @@
             transform: scale(0.9);
         }
 
-        /* 面板容器 - 固定定位，跟随 💙 位置 */
-        /* 面板容器 - 固定定位，浮在内容上方 */
-.panels-wrapper {
-    overflow-y: auto;
-    transition: max-height 0.3s ease-out;
-    background: #ffffff;
-    position: fixed;
-    left: 0;
-    right: 0;
-    z-index: 999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-radius: 0 0 16px 16px;
-    max-height: 60vh;
-}
-.panels-wrapper.collapsed {
-    max-height: 0 !important;
-    box-shadow: none;
-}
+        .panels-wrapper {
+            overflow-y: auto;
+            transition: max-height 0.3s ease-out;
+            background: #ffffff;
+            position: fixed;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 0 0 16px 16px;
+            max-height: 60vh;
+        }
+        .panels-wrapper.collapsed {
+            max-height: 0 !important;
+            box-shadow: none;
+        }
 
         .collapse-panel {
             border-bottom: 0.5px solid #e5e5ea;
@@ -326,6 +323,7 @@
             font-size: 0.9rem;
             line-height: 1.4;
             word-break: break-word;
+            white-space: pre-wrap;
         }
         .user-message .bubble { background: #007aff; color: white; border-bottom-right-radius: 4px; }
         .assistant-message .bubble { background: #e5e5ea; color: #000; border-bottom-left-radius: 4px; }
@@ -449,7 +447,6 @@
             <div class="call-btn">📞</div>
         </div>
 
-        <!-- 面板容器 -->
         <div id="panelsWrapper" class="panels-wrapper collapsed">
             <div class="collapse-panel" id="archivePanel">
                 <div class="panel-header" id="archivePanelHeader">
@@ -528,7 +525,6 @@
     // ========== 折叠面板控制 ==========
     let mainExpanded = false;
     let subPanelStates = { archivePanel: true, actionPanel: true, apiPanel: true };
-
     const panelsWrapper = document.getElementById('panelsWrapper');
 
     function updatePanelsPosition() {
@@ -635,25 +631,15 @@
         }
     }
 
-    // 监听滚动，更新面板位置
-    window.addEventListener('scroll', () => {
-        if (mainExpanded) {
-            updatePanelsPosition();
-        }
-    });
-
-    window.addEventListener('resize', () => {
-        if (mainExpanded) {
-            updatePanelsPosition();
-        }
-    });
+    window.addEventListener('scroll', () => { if (mainExpanded) updatePanelsPosition(); });
+    window.addEventListener('resize', () => { if (mainExpanded) updatePanelsPosition(); });
 
     document.getElementById('mainToggle')?.addEventListener('click', toggleMain);
     document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
     document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
     document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
 
-    // ========== 记忆系统（每个存档独立） ==========
+    // ========== 记忆系统 ==========
     let currentApiKey = '';
     let isLoading = false;
     let currentArchiveId = 'default';
@@ -725,7 +711,7 @@
                 body: JSON.stringify({
                     model: 'deepseek-chat',
                     messages: [
-                        { role: 'system', content: '请用一句话总结以下对话中值得记住的重要信息。只输出总结内容，不要输出其他废话。如果没什么重要的，输出"无明显重要信息"。' },
+                        { role: 'system', content: '请用一句话总结以下对话中值得记住的重要信息。只输出总结内容。如果没什么重要的，输出"无明显重要信息"。' },
                         { role: 'user', content: conversationText }
                     ],
                     temperature: 0.5,
@@ -842,7 +828,7 @@
         a.download = `deepseek_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        alert('✅ 备份已导出！包含所有存档和记忆');
+        alert('✅ 备份已导出！');
     }
 
     function importBackup() {
@@ -996,7 +982,7 @@
         const timeStr = customTime || getCurrentTimeString();
         const timestampHtml = showTimestamp ? `<div class="timestamp">${timeStr}</div>` : '';
         const avatarHtml = role === 'user' ? '<div class="avatar"><img src="Q小狐柚.png" alt="我" onerror="this.innerText=\'🐱\'"></div>' : '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.innerText=\'🤖\'"></div>';
-        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble" style="white-space: pre-wrap;">${escapeHtml(content)}</div>${timestampHtml}</div>`;
+        div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble">${escapeHtml(content)}</div>${timestampHtml}</div>`;
         let pressTimer;
         div.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500); });
         div.addEventListener('touchend', () => clearTimeout(pressTimer));
@@ -1075,7 +1061,7 @@
             const welcome = document.createElement('div');
             welcome.className = 'message assistant-message';
             const timestampHtml = showTimestamp ? `<div class="timestamp">${getCurrentTimeString()}</div>` : '';
-            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>每个存档的记忆是独立的，互不干扰<br>我会记住我们的对话，每15轮总结一次记忆</div>${timestampHtml}</div>`;
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>每个存档的记忆是独立的<br>我会记住我们的对话，每15轮总结一次记忆</div>${timestampHtml}</div>`;
             chatDiv.appendChild(welcome);
         } else {
             conversationHistory.forEach(msg => { if (msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
@@ -1086,7 +1072,7 @@
     async function callDeepSeek(userMsg) {
         if (!currentApiKey) throw new Error('请先保存 API Key');
         const memoryContext = getMemoryContext();
-        { role: 'system', content: `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。\n\n【回复格式规则】\n- 如果你想一次性发送多条短消息，用 【分割】 隔开\n- 例如：第一条消息内容【分割】第二条消息内容【分割】第三条消息内容\n- 如果你想发一条长消息，直接写，不用加任何标记\n- 请用自然的口语聊天，像真人一样` }
+        const systemPrompt = memoryContext ? `以下是关于我们对话的重要记忆，请参考这些记忆来回复：\n${memoryContext}\n\n请继续对话。` : '请用自然友好的方式和我聊天。';
         const messages = [
             { role: 'system', content: systemPrompt },
             ...conversationHistory.filter(m => m.role !== 'system').slice(-25),
@@ -1114,75 +1100,73 @@
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
 
     async function sendMessage(userText = null, isRegenerate = false) {
-    let text = userText !== null ? userText : document.getElementById('messageInput').value.trim();
-    if (!text) return;
-    if (!currentApiKey) { alert('请先保存 API Key'); return; }
-    
-    if (!isRegenerate) {
-        document.getElementById('messageInput').value = '';
-        const userMsgObj = addMessageToUI('user', text);
-        conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id, timestamp: userMsgObj.time });
-        lastUserMessage = text;
-    } else {
-        const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
-        if (lastAI !== -1) {
-            const realIdx = conversationHistory.length - 1 - lastAI;
-            const removed = conversationHistory.splice(realIdx, 1)[0];
-            if (removed?.id) document.querySelector(`[data-msg-id="${removed.id}"]`)?.remove();
-        }
-    }
-    
-    // 每条消息独立调用 AI，不等待前一条回复
-    callAiAndAddResponse(lastUserMessage);
-    saveCurrentArchive();
-}
-
-// 新增：独立的 AI 调用函数
-async function callAiAndAddResponse(userMsg) {
-    showTyping();
-    try {
-        const reply = await callDeepSeek(userMsg);
-        hideTyping();
-        // 按 【分割】 或 【换条】 拆分消息
-let parts = [];
-if (reply.includes('【分割】') || reply.includes('【换条】')) {
-    parts = reply.split(/【分割】|【换条】/);
-} else if (reply.includes('\n\n')) {
-    // 如果没有标记，按双空行拆分（智能回退）
-    parts = reply.split(/\n\s*\n/);
-} else {
-    parts = [reply];
-}
-
-for (let i = 0; i < parts.length; i++) {
-    const p = parts[i].trim();
-    if (p) {
-        // 延迟发送，更像真人聊天
-        setTimeout(() => {
-            const assistantObj = addMessageToUI('assistant', p);
-            conversationHistory.push({ role: 'assistant', content: p, id: assistantObj.id, timestamp: assistantObj.time });
-            saveCurrentArchive();
-        }, i * 800);
-    }
-}
+        let text = userText !== null ? userText : document.getElementById('messageInput').value.trim();
+        if (!text) return;
+        if (!currentApiKey) { alert('请先保存 API Key'); return; }
         
-        conversationCounter++;
-        saveMemoryToLocal();
-        updateMemoryDisplay();
-        if (conversationCounter % 15 === 0) {
-            const recentMessages = conversationHistory.slice(-30);
-            const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
-            await summarizeToShortMemory(conversationText);
+        if (!isRegenerate) {
+            document.getElementById('messageInput').value = '';
+            const userMsgObj = addMessageToUI('user', text);
+            conversationHistory.push({ role: 'user', content: text, id: userMsgObj.id, timestamp: userMsgObj.time });
+            lastUserMessage = text;
+        } else {
+            const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
+            if (lastAI !== -1) {
+                const realIdx = conversationHistory.length - 1 - lastAI;
+                const removed = conversationHistory.splice(realIdx, 1)[0];
+                if (removed?.id) document.querySelector(`[data-msg-id="${removed.id}"]`)?.remove();
+            }
         }
-    } catch (err) {
-        hideTyping();
-        addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
-    } finally {
+        
+        // 异步调用 AI，不阻塞用户继续发消息
+        callAiAndAddResponse(lastUserMessage);
         saveCurrentArchive();
     }
-}
 
-    function regenerateLast() { if (!isLoading && lastUserMessage) sendMessage(lastUserMessage, true); else if (!lastUserMessage) alert('没有可以重说的消息'); }
+    async function callAiAndAddResponse(userMsg) {
+        showTyping();
+        try {
+            const reply = await callDeepSeek(userMsg);
+            hideTyping();
+            
+            // 支持按【分割】拆分成多条消息
+            let parts = [];
+            if (reply.includes('【分割】')) {
+                parts = reply.split('【分割】');
+            } else if (reply.includes('\n\n')) {
+                parts = reply.split(/\n\s*\n/);
+            } else {
+                parts = [reply];
+            }
+            
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i].trim();
+                if (p) {
+                    setTimeout(() => {
+                        const assistantObj = addMessageToUI('assistant', p);
+                        conversationHistory.push({ role: 'assistant', content: p, id: assistantObj.id, timestamp: assistantObj.time });
+                        saveCurrentArchive();
+                    }, i * 600);
+                }
+            }
+            
+            conversationCounter++;
+            saveMemoryToLocal();
+            updateMemoryDisplay();
+            if (conversationCounter % 15 === 0) {
+                const recentMessages = conversationHistory.slice(-30);
+                const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
+                await summarizeToShortMemory(conversationText);
+            }
+        } catch (err) {
+            hideTyping();
+            addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
+        } finally {
+            saveCurrentArchive();
+        }
+    }
+
+    function regenerateLast() { if (lastUserMessage) sendMessage(lastUserMessage, true); else alert('没有可以重说的消息'); }
     function clearCurrentConversation() { if (confirm('清空当前存档？')) { conversationHistory = []; lastUserMessage = null; renderFullHistory(); saveCurrentArchive(); } }
     function toggleTimestamp() { showTimestamp = !showTimestamp; const btn = document.getElementById('toggleTimestampBtn'); if (btn) btn.textContent = showTimestamp ? '🕐 隐藏时间' : '🕐 显示时间'; renderFullHistory(); }
 
