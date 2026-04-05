@@ -31,9 +31,12 @@
         }
 
         .fixed-top {
-    position: relative;  /* 改为 relative，不再 sticky */
+    position: sticky;
+    top: 0;
+    z-index: 100;
     background: #ffffff;
     flex-shrink: 0;
+    position: relative;  /* 新增这一行 */
 }
 
         .chat-header {
