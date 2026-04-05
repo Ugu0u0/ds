@@ -44,9 +44,10 @@
     border-bottom: 0.5px solid #c6c6c8;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
     position: relative;
 }
+
 .back-btn {
     font-size: 24px;
     color: #007aff;
@@ -54,6 +55,7 @@
     width: 32px;
     text-align: center;
 }
+
 .header-info {
     position: absolute;
     left: 0;
@@ -62,6 +64,12 @@
     flex-direction: column;
     align-items: center;
     pointer-events: none;
+}
+
+.right-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 .contact-name {
     font-size: 17px;
@@ -447,10 +455,12 @@
                 <div class="contact-name">A_d老师111</div>
                 <div class="contact-status">DeepSeek AI · 在线</div>
             </div>
-            <div class="main-toggle" id="mainToggle">
-                <span class="main-toggle-icon">💙</span>
-            </div>
-            <div class="call-btn">📞</div>
+            <div class="right-buttons">
+    <div class="main-toggle" id="mainToggle">
+        <span class="main-toggle-icon">💙</span>
+    </div>
+    <div class="call-btn">📞</div>
+</div>
         </div>
 
         <div id="panelsWrapper" class="panels-wrapper collapsed">
