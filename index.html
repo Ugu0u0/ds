@@ -606,7 +606,18 @@
     function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
     function saveArchives() { localStorage.setItem('deepseek_archives', JSON.stringify(archives)); localStorage.setItem('deepseek_current_archive', currentArchiveId); }
-    function loadArchives() { const s = localStorage.getItem('deepseek_archives'); archives = s ? JSON.parse(s) : { default: { history: [], memory: { short: [], long: [], counter: 0 } } }; currentArchiveId = localStorage.getItem('deepseek_current_archive') || 'default'; if (!archives[currentArchiveId]) archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; }
+    function loadArchives() { 
+    const s = localStorage.getItem('deepseek_archives'); 
+    archives = s ? JSON.parse(s) : { default: { history: [], memory: { short: [], long: [], counter: 0 } } }; 
+    currentArchiveId = localStorage.getItem('deepseek_current_archive') || 'default'; 
+    if (!archives[currentArchiveId]) archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } };
+    
+    // 新增：加载 API Key
+    const savedKey = localStorage.getItem('deepseek_api_key');
+    if (savedKey && savedKey.startsWith('sk-')) {
+        currentApiKey = savedKey;
+    }
+}
 
     function saveCurrent() { archives[currentArchiveId] = { history: conversationHistory, memory: { short: shortTermMemories, long: longTermVolumes, counter: conversationCounter } }; saveArchives(); }
     function loadCurrent() { const mem = archives[currentArchiveId]?.memory || { short: [], long: [], counter: 0 }; shortTermMemories = mem.short; longTermVolumes = mem.long; conversationCounter = mem.counter; conversationHistory = archives[currentArchiveId]?.history || []; lastUserMessage = conversationHistory.filter(m => m.role === 'user').pop()?.content || ''; updateMemoryDisplay(); }
@@ -616,32 +627,35 @@
     const shortBadge = document.getElementById('shortMemoryBadge');
     if (!memoryContent) return;
     
-    if (longTermVolumes.length === 0 && shortTermMemories.length === 0) {
+    // 安全防护：确保变量是数组
+    const safeLong = Array.isArray(longTermVolumes) ? longTermVolumes : [];
+    const safeShort = Array.isArray(shortTermMemories) ? shortTermMemories : [];
+    
+    if (safeLong.length === 0 && safeShort.length === 0) {
         memoryContent.innerHTML = '暂无记忆，多聊几句就会有了 💙';
         if (shortBadge) shortBadge.innerHTML = '';
         return;
     }
     
     let html = '';
-    if (longTermVolumes.length > 0) {
+    if (safeLong.length > 0) {
         html += '<div style="margin-bottom:8px;"><strong>📚 长期记忆卷轴</strong></div>';
-        for (let vol of longTermVolumes) {
+        for (let vol of safeLong) {
             html += `<div style="margin-bottom:10px;padding-left:8px;border-left:2px solid #007aff;">
                 <div style="font-weight:500;font-size:0.65rem;color:#007aff;">第 ${vol.volumeNumber} 卷</div>
                 <div style="font-size:0.65rem;">${escapeHtml(vol.content)}</div>
             </div>`;
         }
     }
-    if (shortTermMemories.length > 0) {
-        html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/15条)</div>`;
-        for (let m of shortTermMemories) {
+    if (safeShort.length > 0) {
+        html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${safeShort.length}/15条)</div>`;
+        for (let m of safeShort) {
             html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`;
         }
     }
     memoryContent.innerHTML = html;
-    if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter} 轮对话 · 每15轮总结1条短期记忆`;
+    if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter || 0} 轮对话 · 每15轮总结1条短期记忆`;
 }
-
     async function summarize() { /* 模拟总结，实际项目中可调用API */ if(shortTermMemories.length>=15) { longTermVolumes.push({ volumeNumber: longTermVolumes.length+1, content: shortTermMemories.join('；') }); shortTermMemories = []; saveCurrent(); updateMemoryDisplay(); } }
     async function forceSynthesize() { if(shortTermMemories.length) await summarize(); else alert('暂无短期记忆'); }
     document.getElementById('refreshMemoryBtn')?.addEventListener('click', forceSynthesize);
@@ -673,7 +687,10 @@
 
     function renderFullHistory() {
         const chatDiv = document.getElementById('chatMessages'); chatDiv.innerHTML = '';
-        if(!conversationHistory.length) { chatDiv.innerHTML = '<div class="message assistant-message"><div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>每个存档的记忆是独立的</div></div></div>'; return; }
+        if(!conversationHistory.length) { 
+    chatDiv.innerHTML = '<div class="message assistant-message"><div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble">你好！💙<br>保存 API Key 后就可以开始对话~<br>点击 💙 展开设置面板<br>每个存档的记忆是独立的</div></div></div>'; 
+    return; 
+}
         conversationHistory.forEach(msg => { if(msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
     }
 
