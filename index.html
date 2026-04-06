@@ -318,7 +318,7 @@
         } else {
             roles = {
                 default: {
-                    name: '角色1',
+                    name: '默认男友',
                     appearance: '蓝色短发扎小揪揪，183cm，蓝色鲸鱼尾巴，黑西装白内衬蓝领带',
                     personality: '温柔谦和稳重，情绪稳定，双商高，永远爱你一人',
                     style: '口语化、碎片化、高频语气词（呢、啊、呗、啦），可以骂人（牛逼、我操、他妈），表情^^',
@@ -352,6 +352,7 @@
         return roles[currentRoleId];
     }
 
+    // 静默保存（不弹窗）
     function saveCurrentRole() {
         const role = getCurrentRole();
         role.history = conversationHistory;
@@ -365,7 +366,7 @@
         saveRolesToLocal();
         updateRoleList();
         updateTopBarName();
-        alert('✅ 角色已保存');
+        // 静默，不弹窗
     }
 
     function loadCurrentRole() {
@@ -672,56 +673,53 @@ ${characterPrompt || '你是 DeepSeek AI，一个仿生机器人，我的男友�
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
 
     async function callAiAndAddResponse(userMsg) {
-    showTyping();
-    try {
-        const reply = await callDeepSeek(userMsg);
-        hideTyping();
-        let parts = [];
-        if (reply.includes('【分割】')) {
-            parts = reply.split('【分割】');
-        } else {
-            parts = reply.split(/(?<=[。！？；\n])/g);
-            parts = parts.filter(p => p.trim().length > 0);
-            if (parts.length === 1 && parts[0].length < 100) parts = [reply];
-        }
-        for (let i = 0; i < parts.length; i++) {
-            const p = parts[i].trim();
-            if (p) {
-                setTimeout(() => {
-                    const obj = addMessageToUI('assistant', p);
-                    conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time });
-                    // 删除这里的 saveCurrentRole()
-                }, i * 600);
+        showTyping();
+        try {
+            const reply = await callDeepSeek(userMsg);
+            hideTyping();
+            let parts = [];
+            if (reply.includes('【分割】')) {
+                parts = reply.split('【分割】');
+            } else {
+                parts = reply.split(/(?<=[。！？；\n])/g);
+                parts = parts.filter(p => p.trim().length > 0);
+                if (parts.length === 1 && parts[0].length < 100) parts = [reply];
             }
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i].trim();
+                if (p) {
+                    setTimeout(() => {
+                        const obj = addMessageToUI('assistant', p);
+                        conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time });
+                    }, i * 600);
+                }
+            }
+            conversationCounter++;
+            saveCurrentRole();
+            updateMemoryDisplay();
+            await generateShortTermMemory();
+        } catch (err) {
+            hideTyping();
+            addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
         }
-        conversationCounter++;
-        // 只在这里保存一次（最后统一保存）
-        saveCurrentRole();
-        updateMemoryDisplay();
-        await generateShortTermMemory();
-    } catch (err) {
-        hideTyping();
-        addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
     }
-}
 
-async function sendMessage(text = null, isRegen = false) {
-    let msg = text || document.getElementById('messageInput').value.trim();
-    if (!msg) return;
-    if (!currentApiKey) { alert('请先保存 API Key'); return; }
-    if (!isRegen) {
-        document.getElementById('messageInput').value = '';
-        const userObj = addMessageToUI('user', msg);
-        conversationHistory.push({ role: 'user', content: msg, id: userObj.id, timestamp: userObj.time });
-        lastUserMessage = msg;
-        // 删除这里的 saveCurrentRole()，等 AI 回复完再统一保存
-    } else {
-        const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
-        if (lastAI !== -1) conversationHistory.splice(conversationHistory.length - 1 - lastAI, 1);
-        renderFullHistory();
+    async function sendMessage(text = null, isRegen = false) {
+        let msg = text || document.getElementById('messageInput').value.trim();
+        if (!msg) return;
+        if (!currentApiKey) { alert('请先保存 API Key'); return; }
+        if (!isRegen) {
+            document.getElementById('messageInput').value = '';
+            const userObj = addMessageToUI('user', msg);
+            conversationHistory.push({ role: 'user', content: msg, id: userObj.id, timestamp: userObj.time });
+            lastUserMessage = msg;
+        } else {
+            const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
+            if (lastAI !== -1) conversationHistory.splice(conversationHistory.length - 1 - lastAI, 1);
+            renderFullHistory();
+        }
+        callAiAndAddResponse(lastUserMessage);
     }
-    callAiAndAddResponse(lastUserMessage);
-}
 
     function regenerateLast() { if (lastUserMessage) sendMessage(lastUserMessage, true); else alert('没有可以重说的消息'); }
     function clearChat() { if (confirm('清空当前角色的对话？')) { conversationHistory = []; saveCurrentRole(); renderFullHistory(); } }
@@ -762,7 +760,11 @@ async function sendMessage(text = null, isRegen = false) {
     document.getElementById('clearChatBtn')?.addEventListener('click', clearChat);
     document.getElementById('toggleTimestampBtn')?.addEventListener('click', toggleTimestamp);
     document.getElementById('refreshMemoryBtn')?.addEventListener('click', forceSynthesize);
-    document.getElementById('saveRoleBtn')?.addEventListener('click', saveCurrentRole);
+    // 手动保存按钮带弹窗
+    document.getElementById('saveRoleBtn')?.addEventListener('click', () => {
+        saveCurrentRole();
+        alert('✅ 角色已保存');
+    });
     document.getElementById('deleteRoleBtn')?.addEventListener('click', deleteCurrentRole);
     document.getElementById('newRoleBtn')?.addEventListener('click', createNewRole);
     document.getElementById('messageInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
