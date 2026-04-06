@@ -814,7 +814,9 @@ ${characterPrompt || '你是 DeepSeek AI，一个仿生机器人，我的男友�
     document.getElementById('messageInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
     function autoResize() { const inp = document.getElementById('messageInput'); inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 80) + 'px'; }
     document.getElementById('messageInput')?.addEventListener('input', autoResize);
-
+window.addEventListener('beforeunload', () => {
+    saveCurrentRole();
+});
     loadRolesFromLocal();
     updateApiKeyUI();
     loadPanelStates();
