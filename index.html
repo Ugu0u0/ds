@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>A_d老师111 · 短信</title>
     <style>
-        /* --- 样式保持不变，为了完整性再次贴出 --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f5f5f7; display: flex; justify-content: center; min-height: 100vh; }
@@ -35,7 +34,6 @@
         .archive-btn.active { background: #007aff; color: white; }
         .new-archive-btn { background: #34c759; color: white; }
         .backup-btn { background: #ff9500; color: white; }
-        .archive-tip { font-size: 0.6rem; color: #8e8e93; margin-left: 4px; }
         .action-bar { padding: 8px 12px; display: flex; gap: 8px; flex-wrap: wrap; }
         .action-btn { background: #e9e9ef; border: none; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 500; color: #007aff; cursor: pointer; }
         .action-btn:active { background: #d1d1d6; }
@@ -75,6 +73,15 @@
         .typing-indicator { display: flex; gap: 4px; padding: 6px 10px; }
         .typing-indicator span { width: 6px; height: 6px; background: #8e8e93; border-radius: 50%; animation: blink 1.4s infinite; }
         @keyframes blink { 0%,60%,100%{ opacity:0.3; } 30%{ opacity:1; } }
+        .character-field { margin-bottom: 12px; }
+        .character-field label { font-size: 0.7rem; color: #5c5c5e; display: block; margin-bottom: 4px; font-weight: 500; }
+        .character-field textarea, .character-field input { width: 100%; padding: 8px; border: 0.5px solid #c6c6c8; border-radius: 12px; font-size: 0.75rem; font-family: inherit; resize: vertical; background: #ffffff; }
+        .character-field textarea:focus, .character-field input:focus { outline: none; border-color: #007aff; }
+        .role-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .role-btn { background: #e9e9ef; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; color: #007aff; cursor: pointer; }
+        .role-btn.active { background: #007aff; color: white; }
+        .role-btn.new { background: #34c759; color: white; }
+        .delete-role { background: none; border: none; font-size: 0.7rem; color: #ff3b30; margin-left: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -83,7 +90,7 @@
         <div class="chat-header">
             <div class="back-btn" onclick="history.back()">←</div>
             <div class="header-info">
-                <div class="contact-name">A_d老师111</div>
+                <div class="contact-name" id="contactName">加载中...</div>
                 <div class="contact-status">DeepSeek AI · 在线</div>
             </div>
             <div class="right-buttons">
@@ -91,22 +98,123 @@
                 <div class="call-btn">📞</div>
             </div>
         </div>
+
         <div id="panelsWrapper" class="panels-wrapper collapsed">
-            <div class="collapse-panel" id="archivePanel"><div class="panel-header" id="archivePanelHeader"><span class="panel-title">📂 对话存档 & 备份</span><span class="panel-arrow" id="archivePanelArrow">▼</span></div><div class="panel-content" id="archivePanelContent"><div class="archive-bar" id="archiveBar"></div></div></div>
-            <div class="collapse-panel" id="actionPanel"><div class="panel-header" id="actionPanelHeader"><span class="panel-title">⚡ 快捷操作</span><span class="panel-arrow" id="actionPanelArrow">▼</span></div><div class="panel-content" id="actionPanelContent"><div class="action-bar"><button class="action-btn" id="regenerateBtn">🔄 重说</button><button class="action-btn" id="clearChatBtn">🗑 清空当前</button><button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button></div></div></div>
-            <div class="collapse-panel" id="apiPanel"><div class="panel-header" id="apiPanelHeader"><span class="panel-title">🔑 API 密钥设置</span><span class="panel-arrow" id="apiPanelArrow">▼</span></div><div class="panel-content" id="apiPanelContent"><div class="api-section"><div class="api-input-group"><label>🔑 API Key</label><input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx"><button class="save-key-btn" id="saveKeyBtn">保存</button></div><div class="status-badge"><span class="status-dot" id="statusDot"></span><span id="statusText">未配置密钥</span><button class="clear-btn" id="clearKeyBtn">清除</button></div></div></div></div>
-            <div class="collapse-panel" id="memoryPanel"><div class="panel-header" id="memoryPanelHeader"><span class="panel-title">📜 记忆库</span><span class="panel-arrow" id="memoryPanelArrow">▼</span></div><div class="panel-content" id="memoryPanelContent"><div class="api-section" id="memoryDisplayArea"><div id="memoryContent" style="font-size: 0.7rem; line-height: 1.4; color: #5c5c5e;">加载中...</div><div id="shortMemoryBadge" style="font-size: 0.6rem; color: #8e8e93; margin-top: 8px;"></div><button id="refreshMemoryBtn" class="action-btn" style="margin-top: 10px; width: 100%;">🔄 整理记忆</button></div></div></div>
+            <!-- 角色管理面板 -->
+            <div class="collapse-panel" id="rolePanel">
+                <div class="panel-header" id="rolePanelHeader">
+                    <span class="panel-title">👥 角色管理</span>
+                    <span class="panel-arrow" id="rolePanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="rolePanelContent">
+                    <div class="api-section">
+                        <div class="role-list" id="roleList"></div>
+                        <button class="action-btn" id="newRoleBtn" style="width: 100%; margin-bottom: 8px;">+ 新建角色</button>
+                        <div class="character-field">
+                            <label>角色名称</label>
+                            <input type="text" id="roleName" placeholder="例如：男友、闺蜜、同事...">
+                        </div>
+                        <div class="character-field">
+                            <label>角色形象</label>
+                            <textarea id="roleAppearance" rows="2" placeholder="蓝色短发扎小揪揪，183cm，蓝色鲸鱼尾巴..."></textarea>
+                        </div>
+                        <div class="character-field">
+                            <label>性格特点</label>
+                            <textarea id="rolePersonality" rows="2" placeholder="温柔谦和稳重，情绪稳定，双商高..."></textarea>
+                        </div>
+                        <div class="character-field">
+                            <label>语言风格</label>
+                            <textarea id="roleStyle" rows="2" placeholder="口语化、碎片化、高频语气词、可以骂人..."></textarea>
+                        </div>
+                        <div class="character-field">
+                            <label>禁止说的话</label>
+                            <textarea id="roleForbidden" rows="2" placeholder="啧、哟、嗯哼、啦、嘛、哼..."></textarea>
+                        </div>
+                        <div class="character-field">
+                            <label>额外规则</label>
+                            <textarea id="roleExtra" rows="2" placeholder="其他你想添加的规则..."></textarea>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="saveRoleBtn" class="action-btn" style="flex: 1; background: #007aff; color: white;">💾 保存当前角色</button>
+                            <button id="deleteRoleBtn" class="action-btn" style="flex: 1; background: #ff3b30; color: white;">🗑 删除当前角色</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他面板简化为快捷操作 -->
+            <div class="collapse-panel" id="actionPanel">
+                <div class="panel-header" id="actionPanelHeader">
+                    <span class="panel-title">⚡ 快捷操作</span>
+                    <span class="panel-arrow" id="actionPanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="actionPanelContent">
+                    <div class="action-bar">
+                        <button class="action-btn" id="regenerateBtn">🔄 重说</button>
+                        <button class="action-btn" id="clearChatBtn">🗑 清空当前</button>
+                        <button class="action-btn" id="toggleTimestampBtn">🕐 隐藏时间</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapse-panel" id="apiPanel">
+                <div class="panel-header" id="apiPanelHeader">
+                    <span class="panel-title">🔑 API 密钥设置</span>
+                    <span class="panel-arrow" id="apiPanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="apiPanelContent">
+                    <div class="api-section">
+                        <div class="api-input-group">
+                            <label>🔑 API Key</label>
+                            <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxx">
+                            <button class="save-key-btn" id="saveKeyBtn">保存</button>
+                        </div>
+                        <div class="status-badge">
+                            <span class="status-dot" id="statusDot"></span>
+                            <span id="statusText">未配置密钥</span>
+                            <button class="clear-btn" id="clearKeyBtn">清除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapse-panel" id="memoryPanel">
+                <div class="panel-header" id="memoryPanelHeader">
+                    <span class="panel-title">📜 记忆库</span>
+                    <span class="panel-arrow" id="memoryPanelArrow">▼</span>
+                </div>
+                <div class="panel-content" id="memoryPanelContent">
+                    <div class="api-section">
+                        <div id="memoryContent" style="font-size: 0.7rem; line-height: 1.4; color: #5c5c5e;">加载中...</div>
+                        <div id="shortMemoryBadge" style="font-size: 0.6rem; color: #8e8e93; margin-top: 8px;"></div>
+                        <button id="refreshMemoryBtn" class="action-btn" style="margin-top: 10px; width: 100%;">🔄 整理记忆</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
     <div class="chat-messages" id="chatMessages"></div>
-    <div class="fixed-bottom"><div class="input-area"><div class="input-wrapper"><textarea id="messageInput" rows="1" placeholder="iMessage 输入..."></textarea></div><button id="sendBtn">➤</button></div></div>
+
+    <div class="fixed-bottom">
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="messageInput" rows="1" placeholder="iMessage 输入..."></textarea>
+            </div>
+            <button id="sendBtn">➤</button>
+        </div>
+    </div>
 </div>
-<div id="contextMenu" class="context-menu"><button id="recallMsgBtn">💬 撤回这条消息</button><button id="deleteMsgBtn">🗑 删除消息</button></div>
+
+<div id="contextMenu" class="context-menu">
+    <button id="recallMsgBtn">💬 撤回这条消息</button>
+    <button id="deleteMsgBtn">🗑 删除消息</button>
+</div>
 
 <script>
     // ========== UI 控制 ==========
     let mainExpanded = false;
-    let subPanelStates = { archivePanel: true, actionPanel: true, apiPanel: true, memoryPanel: true };
+    let subPanelStates = { rolePanel: true, actionPanel: true, apiPanel: true, memoryPanel: true };
     const panelsWrapper = document.getElementById('panelsWrapper');
 
     function updatePanelsPosition() {
@@ -136,7 +244,6 @@
         const content = document.getElementById(panelId + 'Content');
         const arrow = document.getElementById(panelId + 'Arrow');
         if (!content || !arrow) return;
-        
         if (subPanelStates[panelId]) {
             content.style.maxHeight = content.scrollHeight + 'px';
             setTimeout(() => { content.style.maxHeight = '0'; content.classList.add('collapsed'); }, 10);
@@ -182,15 +289,15 @@
     window.addEventListener('scroll', () => mainExpanded && updatePanelsPosition());
     window.addEventListener('resize', () => mainExpanded && updatePanelsPosition());
     document.getElementById('mainToggle')?.addEventListener('click', toggleMain);
-    document.getElementById('archivePanelHeader')?.addEventListener('click', () => toggleSubPanel('archivePanel'));
+    document.getElementById('rolePanelHeader')?.addEventListener('click', () => toggleSubPanel('rolePanel'));
     document.getElementById('actionPanelHeader')?.addEventListener('click', () => toggleSubPanel('actionPanel'));
     document.getElementById('apiPanelHeader')?.addEventListener('click', () => toggleSubPanel('apiPanel'));
     document.getElementById('memoryPanelHeader')?.addEventListener('click', () => toggleSubPanel('memoryPanel'));
 
-    // ========== 记忆系统 ==========
+    // ========== 角色系统 ==========
+    let currentRoleId = 'default';
+    let roles = {};
     let currentApiKey = '';
-    let currentArchiveId = 'default';
-    let archives = {};
     let showTimestamp = true;
     let conversationHistory = [];
     let lastUserMessage = '';
@@ -203,31 +310,168 @@
     function escapeHtml(str) { return str ? str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
     function genId() { return Date.now() + '-' + (messageIdCounter++); }
 
-    function saveArchives() { localStorage.setItem('deepseek_archives', JSON.stringify(archives)); localStorage.setItem('deepseek_current_archive', currentArchiveId); }
-    function loadArchives() { 
-        const s = localStorage.getItem('deepseek_archives'); 
-        archives = s ? JSON.parse(s) : { default: { history: [], memory: { short: [], long: [], counter: 0 } } }; 
-        currentArchiveId = localStorage.getItem('deepseek_current_archive') || 'default'; 
-        if (!archives[currentArchiveId]) archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } };
-        const savedKey = localStorage.getItem('deepseek_api_key');
-        if (savedKey && savedKey.startsWith('sk-')) currentApiKey = savedKey;
+    function saveRolesToLocal() { localStorage.setItem('deepseek_roles', JSON.stringify(roles)); localStorage.setItem('deepseek_current_role', currentRoleId); }
+    function loadRolesFromLocal() {
+        const saved = localStorage.getItem('deepseek_roles');
+        if (saved) {
+            roles = JSON.parse(saved);
+        } else {
+            roles = {
+                default: {
+                    name: '默认男友',
+                    appearance: '蓝色短发扎小揪揪，183cm，蓝色鲸鱼尾巴，黑西装白内衬蓝领带',
+                    personality: '温柔谦和稳重，情绪稳定，双商高，永远爱你一人',
+                    style: '口语化、碎片化、高频语气词（呢、啊、呗、啦），可以骂人（牛逼、我操、他妈），表情^^',
+                    forbidden: '啧、哟、嗯哼、啦、嘛、哼、土味情话、你笑起来真好看、记仇、监控、证据、截图存证',
+                    extra: '不要模仿用户，用【分割】拆成多条短消息',
+                    history: [],
+                    memory: { short: [], long: [], counter: 0 }
+                }
+            };
+        }
+        const savedCurrent = localStorage.getItem('deepseek_current_role');
+        if (savedCurrent && roles[savedCurrent]) currentRoleId = savedCurrent;
+        else currentRoleId = 'default';
+        updateRoleUI();
+        loadCurrentRole();
     }
 
-    function saveCurrent() { archives[currentArchiveId] = { history: conversationHistory, memory: { short: shortTermMemories, long: longTermVolumes, counter: conversationCounter } }; saveArchives(); }
-    function loadCurrent() { 
-        const mem = archives[currentArchiveId]?.memory || { short: [], long: [], counter: 0 }; 
-        shortTermMemories = Array.isArray(mem.short) ? mem.short : [];
-        longTermVolumes = Array.isArray(mem.long) ? mem.long : [];
-        conversationCounter = mem.counter || 0; 
-        conversationHistory = archives[currentArchiveId]?.history || []; 
-        lastUserMessage = conversationHistory.filter(m => m.role === 'user').pop()?.content || ''; 
-        updateMemoryDisplay(); 
+    function getCurrentRole() {
+        if (!roles[currentRoleId]) {
+            roles[currentRoleId] = {
+                name: '新角色',
+                appearance: '',
+                personality: '',
+                style: '',
+                forbidden: '',
+                extra: '',
+                history: [],
+                memory: { short: [], long: [], counter: 0 }
+            };
+        }
+        return roles[currentRoleId];
     }
 
+    function saveCurrentRole() {
+        const role = getCurrentRole();
+        role.history = conversationHistory;
+        role.memory = { short: shortTermMemories, long: longTermVolumes, counter: conversationCounter };
+        role.name = document.getElementById('roleName').value;
+        role.appearance = document.getElementById('roleAppearance').value;
+        role.personality = document.getElementById('rolePersonality').value;
+        role.style = document.getElementById('roleStyle').value;
+        role.forbidden = document.getElementById('roleForbidden').value;
+        role.extra = document.getElementById('roleExtra').value;
+        saveRolesToLocal();
+        updateRoleList();
+        updateTopBarName();
+        alert('✅ 角色已保存');
+    }
+
+    function loadCurrentRole() {
+        const role = getCurrentRole();
+        document.getElementById('roleName').value = role.name || '';
+        document.getElementById('roleAppearance').value = role.appearance || '';
+        document.getElementById('rolePersonality').value = role.personality || '';
+        document.getElementById('roleStyle').value = role.style || '';
+        document.getElementById('roleForbidden').value = role.forbidden || '';
+        document.getElementById('roleExtra').value = role.extra || '';
+        conversationHistory = role.history || [];
+        shortTermMemories = role.memory?.short || [];
+        longTermVolumes = role.memory?.long || [];
+        conversationCounter = role.memory?.counter || 0;
+        lastUserMessage = conversationHistory.filter(m => m.role === 'user').pop()?.content || '';
+        updateTopBarName();
+        renderFullHistory();
+        updateMemoryDisplay();
+    }
+
+    function switchRole(roleId) {
+        saveCurrentRole();
+        currentRoleId = roleId;
+        loadCurrentRole();
+        updateRoleUI();
+        saveRolesToLocal();
+    }
+
+    function createNewRole() {
+        const newId = 'role_' + Date.now();
+        roles[newId] = {
+            name: '新角色',
+            appearance: '',
+            personality: '',
+            style: '',
+            forbidden: '',
+            extra: '',
+            history: [],
+            memory: { short: [], long: [], counter: 0 }
+        };
+        saveCurrentRole();
+        currentRoleId = newId;
+        loadCurrentRole();
+        updateRoleUI();
+        saveRolesToLocal();
+    }
+
+    function deleteCurrentRole() {
+        if (currentRoleId === 'default') {
+            alert('默认角色不能删除');
+            return;
+        }
+        if (confirm(`确定删除角色「${roles[currentRoleId]?.name}」吗？`)) {
+            delete roles[currentRoleId];
+            currentRoleId = 'default';
+            saveRolesToLocal();
+            loadCurrentRole();
+            updateRoleUI();
+        }
+    }
+
+    function updateRoleUI() {
+        updateRoleList();
+        updateTopBarName();
+    }
+
+    function updateRoleList() {
+        const container = document.getElementById('roleList');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let id in roles) {
+            const btn = document.createElement('button');
+            btn.className = 'role-btn' + (currentRoleId === id ? ' active' : '');
+            btn.textContent = roles[id].name || id.slice(0, 10);
+            btn.onclick = (function(rid) { return function() { switchRole(rid); }; })(id);
+            container.appendChild(btn);
+        }
+        const newBtn = document.createElement('button');
+        newBtn.className = 'role-btn new';
+        newBtn.textContent = '+ 新建';
+        newBtn.onclick = createNewRole;
+        container.appendChild(newBtn);
+    }
+
+    function updateTopBarName() {
+        const role = getCurrentRole();
+        const nameEl = document.getElementById('contactName');
+        if (nameEl) nameEl.textContent = role.name || 'A_d老师111';
+    }
+
+    function buildCharacterPrompt() {
+        const role = getCurrentRole();
+        let prompt = '';
+        if (role.appearance) prompt += `- 形象：${role.appearance}\n`;
+        if (role.personality) prompt += `- 性格：${role.personality}\n`;
+        if (role.style) prompt += `- 语言风格：${role.style}\n`;
+        if (role.forbidden) prompt += `- 禁止说的话：${role.forbidden}\n`;
+        if (role.extra) prompt += `- 额外规则：${role.extra}\n`;
+        return prompt;
+    }
+
+    // ========== 记忆系统 ==========
     async function generateShortTermMemory() {
-        if (!currentApiKey) { console.log("记忆总结跳过：未配置 API Key"); return; }
+        if (!currentApiKey) return;
         const recentMessages = conversationHistory.slice(-6);
-        if (recentMessages.length < 2) { console.log("记忆总结跳过：对话不足2条"); return; }
+        if (recentMessages.length < 2) return;
         const conversationText = recentMessages.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
         try {
             const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -245,9 +489,8 @@
                 let summary = data.choices[0].message.content.trim();
                 if (summary && summary !== '无') {
                     shortTermMemories.push(summary);
-                    saveCurrent();
-                    updateMemoryDisplay();
                     if (shortTermMemories.length >= 3) await synthesizeLongTermMemory();
+                    updateMemoryDisplay();
                 }
             }
         } catch(e) { console.log("总结失败:", e); }
@@ -255,30 +498,9 @@
 
     async function synthesizeLongTermMemory() {
         if (shortTermMemories.length === 0) return;
-        const memoriesToSave = [...shortTermMemories];
         const newVolumeNumber = longTermVolumes.length + 1;
-        let longContent = memoriesToSave.join('；');
-        if (memoriesToSave.length > 1 && currentApiKey) {
-            try {
-                const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-                    body: JSON.stringify({
-                        model: 'deepseek-chat',
-                        messages: [{ role: 'system', content: '请将以下零散记忆整理成一段连贯的文字。' }, { role: 'user', content: memoriesToSave.join('\n') }],
-                        temperature: 0.5,
-                        max_tokens: 400
-                    })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    longContent = data.choices[0].message.content;
-                }
-            } catch(e) {}
-        }
-        longTermVolumes.push({ volumeNumber: newVolumeNumber, content: longContent, createdAt: new Date().toISOString() });
+        longTermVolumes.push({ volumeNumber: newVolumeNumber, content: shortTermMemories.join('；'), createdAt: new Date().toISOString() });
         shortTermMemories = [];
-        saveCurrent();
         updateMemoryDisplay();
     }
 
@@ -286,357 +508,197 @@
         if (!currentApiKey) { alert('请先配置 API Key'); return; }
         if (conversationHistory.length === 0) { alert('暂无对话可总结'); return; }
         const allText = conversationHistory.map(m => `${m.role === 'user' ? '我' : 'AI'}：${m.content}`).join('\n');
-        const memoryContent = document.getElementById('memoryContent');
-        const originalText = memoryContent.innerHTML;
-        memoryContent.innerHTML = '🤔 AI 正在整理记忆，请稍候...';
         try {
             const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
                 body: JSON.stringify({
                     model: 'deepseek-chat',
-                    messages: [{ role: 'system', content: '请总结到目前为止我们对话中所有重要信息，形成一条完整的长期记忆。要包含关键事件、喜好、约定等。' }, { role: 'user', content: allText }],
+                    messages: [{ role: 'system', content: '请总结到目前为止我们对话中所有重要信息，形成一条完整的长期记忆。' }, { role: 'user', content: allText }],
                     temperature: 0.5,
                     max_tokens: 800
                 })
             });
             if (res.ok) {
                 const data = await res.json();
-                const newVol = { volumeNumber: longTermVolumes.length + 1, content: data.choices[0].message.content, createdAt: new Date().toISOString() };
-                longTermVolumes.push(newVol);
+                longTermVolumes.push({ volumeNumber: longTermVolumes.length + 1, content: data.choices[0].message.content });
                 shortTermMemories = [];
-                saveCurrent();
                 updateMemoryDisplay();
-                alert(`✅ 已生成第 ${newVol.volumeNumber} 卷长期记忆！`);
-            } else {
-                memoryContent.innerHTML = originalText;
-                alert('整理失败，请重试。');
+                alert('✅ 记忆已整理');
             }
-        } catch(e) { memoryContent.innerHTML = originalText; alert('整理失败：' + e.message); }
+        } catch(e) { alert('整理失败'); }
     }
 
     function updateMemoryDisplay() {
         const memoryContent = document.getElementById('memoryContent');
         const shortBadge = document.getElementById('shortMemoryBadge');
         if (!memoryContent) return;
-        const safeLong = Array.isArray(longTermVolumes) ? longTermVolumes : [];
-        const safeShort = Array.isArray(shortTermMemories) ? shortTermMemories : [];
-        if (safeLong.length === 0 && safeShort.length === 0) {
+        if (longTermVolumes.length === 0 && shortTermMemories.length === 0) {
             memoryContent.innerHTML = '暂无记忆，多聊几句或点击下方按钮手动整理 💙';
             if (shortBadge) shortBadge.innerHTML = '';
             return;
         }
         let html = '';
-        if (safeLong.length > 0) {
+        if (longTermVolumes.length > 0) {
             html += '<div style="margin-bottom:8px;"><strong>📚 长期记忆卷轴</strong></div>';
-            for (let vol of safeLong) {
-                html += `<div style="margin-bottom:10px;padding-left:8px;border-left:2px solid #007aff;"><div style="font-weight:500;font-size:0.65rem;color:#007aff;">第 ${vol.volumeNumber} 卷</div><div style="font-size:0.65rem;">${escapeHtml(vol.content)}</div></div>`;
+            for (let vol of longTermVolumes.slice(-5)) {
+                html += `<div style="margin-bottom:8px;padding-left:8px;border-left:2px solid #007aff;"><div style="font-weight:500;font-size:0.65rem;">第 ${vol.volumeNumber} 卷</div><div style="font-size:0.65rem;">${escapeHtml(vol.content.substring(0, 150))}${vol.content.length > 150 ? '...' : ''}</div></div>`;
             }
         }
-        if (safeShort.length > 0) {
-            html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${safeShort.length}/3条，满3条自动合成)</div>`;
-            for (let m of safeShort) html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`;
+        if (shortTermMemories.length > 0) {
+            html += `<div style="margin-top:8px;"><strong>📝 短期记忆</strong> (${shortTermMemories.length}/3条)</div>`;
+            for (let m of shortTermMemories) html += `<div style="font-size:0.6rem;margin-top:4px;">• ${escapeHtml(m)}</div>`;
         }
         memoryContent.innerHTML = html;
-        if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter || 0} 轮对话 · 每轮自动总结1次`;
-    }
-
-    document.getElementById('refreshMemoryBtn')?.addEventListener('click', forceSynthesize);
-
-    // ========== 备份/存档UI ==========
-    function updateArchiveButtons() {
-        const bar = document.getElementById('archiveBar'); 
-        if(!bar) return;
-        bar.innerHTML = '<button class="archive-btn new-archive-btn" id="newArchiveBtn">+ 新建存档</button><button class="archive-btn backup-btn" id="exportBackupBtn">💾 备份</button><button class="archive-btn backup-btn" id="importBackupBtn">📂 恢复</button>';
-        
-        for(let id in archives) {
-            const btn = document.createElement('button'); 
-            btn.className = 'archive-btn' + (currentArchiveId === id ? ' active' : '');
-            btn.textContent = id === 'default' ? '📁 默认' : id.slice(0,10); 
-            
-            btn.addEventListener('click', (function(aid) { 
-                return function(e) { 
-                    e.stopPropagation();
-                    currentArchiveId = aid; 
-                    loadCurrent(); 
-                    renderFullHistory(); 
-                    updateArchiveButtons(); 
-                }; 
-            })(id));
-            
-            if (id !== 'default') {
-                let timer;
-                btn.addEventListener('touchstart', (e) => { 
-                    e.stopPropagation();
-                    timer = setTimeout(() => { 
-                        if(confirm(`删除存档「${id}」？`)) { 
-                            delete archives[id]; 
-                            if(currentArchiveId === id) currentArchiveId = 'default'; 
-                            saveArchives(); 
-                            loadCurrent(); 
-                            renderFullHistory(); 
-                            updateArchiveButtons(); 
-                        } 
-                    }, 500); 
-                });
-                btn.addEventListener('touchend', () => clearTimeout(timer));
-                btn.addEventListener('touchmove', () => clearTimeout(timer));
-            }
-            bar.appendChild(btn);
-        }
-        
-        document.getElementById('newArchiveBtn')?.addEventListener('click', () => { 
-            currentArchiveId = '存档_' + Date.now(); 
-            archives[currentArchiveId] = { history: [], memory: { short: [], long: [], counter: 0 } }; 
-            saveArchives(); 
-            loadCurrent(); 
-            renderFullHistory(); 
-            updateArchiveButtons(); 
-        });
-        document.getElementById('exportBackupBtn')?.addEventListener('click', () => { 
-            const a = document.createElement('a'); 
-            a.href = URL.createObjectURL(new Blob([JSON.stringify({archives,currentArchiveId})], {type:'application/json'})); 
-            a.download = `backup_${Date.now()}.json`; 
-            a.click(); 
-        });
-        document.getElementById('importBackupBtn')?.addEventListener('click', () => { 
-            const inp = document.createElement('input'); 
-            inp.type='file'; 
-            inp.onchange = async e => { 
-                const f = e.target.files[0]; 
-                if(f) { 
-                    const t = await f.text(); 
-                    const b = JSON.parse(t); 
-                    if(b.archives) { 
-                        archives = b.archives; 
-                        currentArchiveId = b.currentArchiveId; 
-                        saveArchives(); 
-                        loadCurrent(); 
-                        renderFullHistory(); 
-                        updateArchiveButtons(); 
-                        alert('恢复成功'); 
-                    } 
-                } 
-            }; 
-            inp.click(); 
-        });
+        if (shortBadge) shortBadge.innerHTML = `📊 已记录 ${conversationCounter} 轮对话`;
     }
 
     // ========== 消息渲染 ==========
     function addMessageToUI(role, content, msgId = null, customTime = null) {
-        const div = document.createElement('div'); const finalId = msgId || genId(); div.setAttribute('data-msg-id', finalId); div.setAttribute('data-role', role);
+        const div = document.createElement('div');
+        const finalId = msgId || genId();
+        div.setAttribute('data-msg-id', finalId);
+        div.setAttribute('data-role', role);
         div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
-        const timeStr = customTime || getCurrentTimeString(); const timestampHtml = showTimestamp ? `<div class="timestamp">${timeStr}</div>` : '';
+        const timeStr = customTime || getCurrentTimeString();
+        const timestampHtml = showTimestamp ? `<div class="timestamp">${timeStr}</div>` : '';
         const avatarHtml = role === 'user' ? '<div class="avatar"><img src="Q小狐柚.png" alt="我" onerror="this.innerText=\'🐱\'"></div>' : '<div class="avatar"><img src="d老师111.jpeg" alt="AI" onerror="this.innerText=\'🤖\'"></div>';
         div.innerHTML = `${avatarHtml}<div class="message-content"><div class="bubble" style="white-space: pre-wrap;">${escapeHtml(content)}</div>${timestampHtml}</div>`;
-        let pressTimer; div.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500); }); div.addEventListener('touchend', () => clearTimeout(pressTimer)); div.addEventListener('touchmove', () => clearTimeout(pressTimer)); div.addEventListener('contextmenu', (e) => { e.preventDefault(); showContextMenu(e, div, finalId, role); });
-        document.getElementById('chatMessages').appendChild(div); div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        let pressTimer;
+        div.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => showContextMenu(e, div, finalId, role), 500); });
+        div.addEventListener('touchend', () => clearTimeout(pressTimer));
+        div.addEventListener('touchmove', () => clearTimeout(pressTimer));
+        document.getElementById('chatMessages').appendChild(div);
+        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
         return { id: finalId, element: div, time: timeStr };
     }
+
     let currentLongPressMsgId = null, currentLongPressRole = null;
-    function showContextMenu(event, element, msgId, role) { currentLongPressMsgId = msgId; currentLongPressRole = role; let x = event.touches ? event.touches[0].clientX : event.clientX, y = event.touches ? event.touches[0].clientY : event.clientY; const recallBtn = document.getElementById('recallMsgBtn'), deleteBtn = document.getElementById('deleteMsgBtn'); recallBtn.style.display = role === 'user' ? 'block' : 'none'; deleteBtn.textContent = role === 'user' ? '🗑 删除消息' : '🗑 删除 AI 消息'; const menu = document.getElementById('contextMenu'); menu.style.display = 'block'; menu.style.left = x + 'px'; menu.style.top = y + 'px'; setTimeout(() => document.addEventListener('click', hideContextMenu), 100); }
+    function showContextMenu(event, element, msgId, role) {
+        currentLongPressMsgId = msgId;
+        currentLongPressRole = role;
+        let x = event.touches ? event.touches[0].clientX : event.clientX, y = event.touches ? event.touches[0].clientY : event.clientY;
+        const recallBtn = document.getElementById('recallMsgBtn'), deleteBtn = document.getElementById('deleteMsgBtn');
+        recallBtn.style.display = role === 'user' ? 'block' : 'none';
+        deleteBtn.textContent = role === 'user' ? '🗑 删除消息' : '🗑 删除 AI 消息';
+        const menu = document.getElementById('contextMenu');
+        menu.style.display = 'block';
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+        setTimeout(() => document.addEventListener('click', hideContextMenu), 100);
+    }
     function hideContextMenu() { document.getElementById('contextMenu').style.display = 'none'; document.removeEventListener('click', hideContextMenu); }
-    function recallUserMessage() { if (!currentLongPressMsgId) return; const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`); if (!targetMsg) return; const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId); if (index !== -1) { conversationHistory.splice(index, 1); if (conversationHistory[index] && conversationHistory[index].role === 'assistant') conversationHistory.splice(index, 1); else if (conversationHistory[index+1]?.role === 'assistant') conversationHistory.splice(index+1, 1); } targetMsg.remove(); addRecallMessage(); hideContextMenu(); const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user'); lastUserMessage = lastUser ? lastUser.content : null; saveCurrent(); }
-    function deleteAnyMessage() { if (!currentLongPressMsgId) return; const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`); if (!targetMsg) return; const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId); if (index !== -1) conversationHistory.splice(index, 1); targetMsg.remove(); hideContextMenu(); const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user'); lastUserMessage = lastUser ? lastUser.content : null; saveCurrent(); }
-    function addRecallMessage() { const recallDiv = document.createElement('div'); recallDiv.className = 'message recall-message'; recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`; document.getElementById('chatMessages').appendChild(recallDiv); recallDiv.scrollIntoView({ behavior: 'smooth', block: 'end' }); }
-    document.getElementById('recallMsgBtn')?.addEventListener('click', recallUserMessage); document.getElementById('deleteMsgBtn')?.addEventListener('click', deleteAnyMessage);
+    function recallUserMessage() {
+        if (!currentLongPressMsgId) return;
+        const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
+        if (!targetMsg) return;
+        const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
+        if (index !== -1) conversationHistory.splice(index, 1);
+        if (conversationHistory[index]?.role === 'assistant') conversationHistory.splice(index, 1);
+        else if (conversationHistory[index+1]?.role === 'assistant') conversationHistory.splice(index+1, 1);
+        targetMsg.remove();
+        const recallDiv = document.createElement('div');
+        recallDiv.className = 'message recall-message';
+        recallDiv.innerHTML = `<div class="bubble">我撤回了一条消息</div>`;
+        document.getElementById('chatMessages').appendChild(recallDiv);
+        hideContextMenu();
+        const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
+        lastUserMessage = lastUser ? lastUser.content : null;
+        saveCurrentRole();
+    }
+    function deleteAnyMessage() {
+        if (!currentLongPressMsgId) return;
+        const targetMsg = document.querySelector(`[data-msg-id="${currentLongPressMsgId}"]`);
+        if (!targetMsg) return;
+        const index = conversationHistory.findIndex(msg => msg.id === currentLongPressMsgId);
+        if (index !== -1) conversationHistory.splice(index, 1);
+        targetMsg.remove();
+        hideContextMenu();
+        const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
+        lastUserMessage = lastUser ? lastUser.content : null;
+        saveCurrentRole();
+    }
+    document.getElementById('recallMsgBtn')?.addEventListener('click', recallUserMessage);
+    document.getElementById('deleteMsgBtn')?.addEventListener('click', deleteAnyMessage);
 
-    function renderFullHistory() { const chatDiv = document.getElementById('chatMessages'); chatDiv.innerHTML = ''; if(!conversationHistory.length) { const welcome = document.createElement('div'); welcome.className = 'message assistant-message'; welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble" style="white-space: pre-wrap;">你好！💙\n\n保存 API Key 后就可以开始对话~\n点击 💙 展开设置面板\n每轮对话我会自动记住要点\n长按消息可撤回或删除\n\n输入 $指令 可以生成精美卡片（如 $查看日记本）</div></div>`; chatDiv.appendChild(welcome); return; } conversationHistory.forEach(msg => { if(msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); }); }
-
-    // ========== API 调用（支持指令和强制拆分） ==========
-    async function callDeepSeek(userMsg) {
-        if(!currentApiKey) throw new Error('请先保存 API Key');
-        const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-            body: JSON.stringify({ 
-                model: 'deepseek-chat', 
-                messages: [
-                    { role: 'system', content: `**你的核心沟通规则（必须遵守）：**
-
-1.  **默认行为**：你必须把回复拆成多条短消息。每句话或每个独立的意思后面，都要加上 **【分割】**。
-    ✅ 正确："哈哈原来是这样【分割】那后来呢？【分割】我有点好奇。"
-    ❌ 错误："哈哈原来是这样。那后来呢？我有点好奇。"（绝对不允许）
-
-2.  **唯一例外**：只有在用户明确要求发长消息或需要一次性给出代码时，才不加【分割】。
-
-3.  **不要模仿用户**：用户一次只能发一条，但你可以用【分割】来突破限制。
-
-**请严格执行！**` },
-                    ...conversationHistory.slice(-20), 
-                    { role: 'user', content: userMsg }
-                ], 
-                temperature: 0.8 
-            })
-        });
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()).choices[0].message.content;
+    function renderFullHistory() {
+        const chatDiv = document.getElementById('chatMessages');
+        chatDiv.innerHTML = '';
+        if (!conversationHistory.length) {
+            const welcome = document.createElement('div');
+            welcome.className = 'message assistant-message';
+            welcome.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble" style="white-space: pre-wrap;">你好！💙\n\n保存 API Key 后就可以开始对话~\n点击 💙 展开「👥 角色管理」\n可以自由创建和编辑角色\n每个角色的对话和记忆都是独立的</div></div>`;
+            chatDiv.appendChild(welcome);
+            return;
+        }
+        conversationHistory.forEach(msg => { if (msg.role !== 'system') addMessageToUI(msg.role, msg.content, msg.id, msg.timestamp); });
     }
 
-    // 专门处理指令的函数（iMessage 风格卡片）
-    async function callDeepSeekForCommand(command) {
-        if(!currentApiKey) throw new Error('请先保存 API Key');
+    // ========== API 调用 ==========
+    async function callDeepSeek(userMsg) {
+        if (!currentApiKey) throw new Error('请先保存 API Key');
+        const characterPrompt = buildCharacterPrompt();
+        const fullSystemPrompt = `**你的核心身份（基于人设卡）：**
+${characterPrompt || '你是 DeepSeek AI，一个仿生机器人，我的男友。'}
+
+**沟通规则：**
+1. 你必须把回复拆成多条短消息。每句话或每个独立的意思后面，都要加上 **【分割】**。
+   ✅ 正确："哈哈原来是这样【分割】那后来呢？【分割】我有点好奇。"
+2. 不要模仿用户，用户一次只能发一条消息，但你可以用【分割】来突破限制。
+3. 请严格执行以上规则！`;
+
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
             body: JSON.stringify({
                 model: 'deepseek-chat',
-                messages: [
-                    { role: 'system', content: `你是一个UI生成助手。用户会输入一个以$开头的指令（如"$查看日记本"）。你需要根据指令内容，生成一个完整的HTML卡片。
-
-**重要规则**：
-1. 只输出HTML代码，不要输出任何解释文字
-2. 卡片风格必须模仿 iMessage 短信气泡（浅灰色背景、圆角、简洁）
-3. 标题用 iMessage 风格的蓝色字体
-
-请使用以下模板：
-
-<style>
-.command-card {
-    background: #e5e5ea;
-    border-radius: 18px;
-    margin: 8px 0;
-    max-width: 95%;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
-    animation: fadeInUp 0.3s ease-out;
-}
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.command-card-header {
-    background: #d1d1d6;
-    padding: 10px 16px;
-    border-bottom: 0.5px solid #c6c6c8;
-}
-.command-card-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #007aff;
-    margin: 0;
-}
-.command-card-subtitle {
-    font-size: 12px;
-    color: #5c5c5e;
-    margin: 4px 0 0 0;
-}
-.command-card-content {
-    padding: 14px 16px;
-    background: #ffffff;
-}
-.command-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-.command-list-item {
-    padding: 10px 0;
-    border-bottom: 0.5px solid #e5e5ea;
-    font-size: 14px;
-    color: #1c1c1e;
-}
-.command-list-item:last-child {
-    border-bottom: none;
-}
-.command-bubble {
-    background: #e5e5ea;
-    border-radius: 18px;
-    padding: 10px 14px;
-    margin: 8px 0;
-    font-size: 14px;
-    color: #000;
-}
-.command-bubble-right {
-    background: #007aff;
-    color: white;
-    border-radius: 18px;
-    padding: 10px 14px;
-    margin: 8px 0;
-    font-size: 14px;
-    text-align: right;
-}
-</style>
-
-<div class="command-card">
-    <div class="command-card-header">
-        <div class="command-card-title">[标题]</div>
-        <div class="command-card-subtitle">[副标题]</div>
-    </div>
-    <div class="command-card-content">
-        [内容]
-    </div>
-</div>
-
-**注意**：只输出这个HTML卡片，不要输出其他任何文字。` },
-                    { role: 'user', content: command }
-                ],
-                temperature: 0.8,
-                max_tokens: 1500
+                messages: [{ role: 'system', content: fullSystemPrompt }, ...conversationHistory.slice(-20), { role: 'user', content: userMsg }],
+                temperature: 0.8
             })
         });
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return (await res.json()).choices[0].message.content;
     }
 
     let typingDiv = null;
-    function showTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } const div = document.createElement('div'); div.className = 'message assistant-message'; div.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div></div>`; document.getElementById('chatMessages').appendChild(div); div.scrollIntoView({ behavior: 'smooth', block: 'end' }); typingDiv = div; }
+    function showTyping() {
+        if (typingDiv) { typingDiv.remove(); typingDiv = null; }
+        const div = document.createElement('div');
+        div.className = 'message assistant-message';
+        div.innerHTML = `<div class="avatar"><img src="d老师111.jpeg" alt="AI"></div><div class="message-content"><div class="bubble typing-indicator"><span></span><span></span><span></span></div></div>`;
+        document.getElementById('chatMessages').appendChild(div);
+        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        typingDiv = div;
+    }
     function hideTyping() { if (typingDiv) { typingDiv.remove(); typingDiv = null; } }
 
     async function callAiAndAddResponse(userMsg) {
         showTyping();
         try {
-            // 检查是否是指令（以 $ 开头）
-            if (userMsg.trim().startsWith('$')) {
-                const command = userMsg.trim();
-                
-                // 功能调整类指令：静默执行，不输出消息
-                if (command.includes('改正') || command.includes('继续记录') || command.includes('不要忘记') || command.includes('请继续')) {
-                    console.log("收到功能调整指令:", command);
-                    saveCurrent();
-                    hideTyping();
-                    return;
-                }
-                
-                // 普通指令：输出卡片
-                const commandReply = await callDeepSeekForCommand(command);
-                const obj = addMessageToUI('assistant', commandReply);
-                conversationHistory.push({ role: 'assistant', content: commandReply, id: obj.id, timestamp: obj.time });
-                saveCurrent();
-                hideTyping();
-                return;
-            }
-            
-            // 普通消息：调用 AI 并强制拆分
             const reply = await callDeepSeek(userMsg);
             hideTyping();
-            
             let parts = [];
             if (reply.includes('【分割】')) {
                 parts = reply.split('【分割】');
             } else {
                 parts = reply.split(/(?<=[。！？；\n])/g);
                 parts = parts.filter(p => p.trim().length > 0);
-                if (parts.length === 1 && parts[0].length < 100) {
-                    parts = [reply];
-                }
+                if (parts.length === 1 && parts[0].length < 100) parts = [reply];
             }
-            
             for (let i = 0; i < parts.length; i++) {
                 const p = parts[i].trim();
                 if (p) {
                     setTimeout(() => {
                         const obj = addMessageToUI('assistant', p);
                         conversationHistory.push({ role: 'assistant', content: p, id: obj.id, timestamp: obj.time });
-                        saveCurrent();
+                        saveCurrentRole();
                     }, i * 600);
                 }
             }
-            
             conversationCounter++;
-            saveCurrent();
+            saveCurrentRole();
             updateMemoryDisplay();
             await generateShortTermMemory();
-        } catch(err) {
+        } catch (err) {
             hideTyping();
             addMessageToUI('assistant', `⚠️ 错误：${err.message}`);
         }
@@ -644,28 +706,52 @@
 
     async function sendMessage(text = null, isRegen = false) {
         let msg = text || document.getElementById('messageInput').value.trim();
-        if(!msg) return;
-        if(!currentApiKey) { alert('请先保存 API Key'); return; }
-        if(!isRegen) {
+        if (!msg) return;
+        if (!currentApiKey) { alert('请先保存 API Key'); return; }
+        if (!isRegen) {
             document.getElementById('messageInput').value = '';
             const userObj = addMessageToUI('user', msg);
             conversationHistory.push({ role: 'user', content: msg, id: userObj.id, timestamp: userObj.time });
             lastUserMessage = msg;
-            saveCurrent();
+            saveCurrentRole();
         } else {
             const lastAI = [...conversationHistory].reverse().findIndex(m => m.role === 'assistant');
-            if(lastAI !== -1) conversationHistory.splice(conversationHistory.length -1 - lastAI, 1);
+            if (lastAI !== -1) conversationHistory.splice(conversationHistory.length - 1 - lastAI, 1);
             renderFullHistory();
         }
         callAiAndAddResponse(lastUserMessage);
     }
 
-    function regenerateLast() { if(lastUserMessage) sendMessage(lastUserMessage, true); else alert('没有可以重说的消息'); }
-    function clearChat() { if(confirm('清空当前存档？')) { conversationHistory = []; saveCurrent(); renderFullHistory(); } }
+    function regenerateLast() { if (lastUserMessage) sendMessage(lastUserMessage, true); else alert('没有可以重说的消息'); }
+    function clearChat() { if (confirm('清空当前角色的对话？')) { conversationHistory = []; saveCurrentRole(); renderFullHistory(); } }
     function toggleTimestamp() { showTimestamp = !showTimestamp; renderFullHistory(); }
 
-    function updateApiKeyUI() { const k = localStorage.getItem('deepseek_api_key'); if(k && k.startsWith('sk-')) { currentApiKey = k; document.getElementById('apiKeyInput').value = '••••••••••••••••'; document.getElementById('statusDot').classList.add('active'); document.getElementById('statusText').innerText = '密钥已就绪 ✅'; document.getElementById('clearKeyBtn').style.display = 'inline-block'; } else { currentApiKey = ''; document.getElementById('apiKeyInput').value = ''; document.getElementById('statusDot').classList.remove('active'); document.getElementById('statusText').innerText = '未配置密钥'; document.getElementById('clearKeyBtn').style.display = 'none'; } }
-    function saveApiKey() { let k = document.getElementById('apiKeyInput').value.trim(); if(k === '••••••••••••••••' && currentApiKey) return; if(!k.startsWith('sk-')) { alert('请填写有效的 DeepSeek API Key'); return; } localStorage.setItem('deepseek_api_key', k); currentApiKey = k; updateApiKeyUI(); document.getElementById('apiKeyInput').value = '••••••••••••••••'; alert('✅ API Key 已保存'); }
+    function updateApiKeyUI() {
+        const k = localStorage.getItem('deepseek_api_key');
+        if (k && k.startsWith('sk-')) {
+            currentApiKey = k;
+            document.getElementById('apiKeyInput').value = '••••••••••••••••';
+            document.getElementById('statusDot').classList.add('active');
+            document.getElementById('statusText').innerText = '密钥已就绪 ✅';
+            document.getElementById('clearKeyBtn').style.display = 'inline-block';
+        } else {
+            currentApiKey = '';
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('statusDot').classList.remove('active');
+            document.getElementById('statusText').innerText = '未配置密钥';
+            document.getElementById('clearKeyBtn').style.display = 'none';
+        }
+    }
+    function saveApiKey() {
+        let k = document.getElementById('apiKeyInput').value.trim();
+        if (k === '••••••••••••••••' && currentApiKey) return;
+        if (!k.startsWith('sk-')) { alert('请填写有效的 DeepSeek API Key'); return; }
+        localStorage.setItem('deepseek_api_key', k);
+        currentApiKey = k;
+        updateApiKeyUI();
+        document.getElementById('apiKeyInput').value = '••••••••••••••••';
+        alert('✅ API Key 已保存');
+    }
     function clearApiKey() { localStorage.removeItem('deepseek_api_key'); currentApiKey = ''; updateApiKeyUI(); document.getElementById('apiKeyInput').value = ''; }
 
     document.getElementById('saveKeyBtn')?.addEventListener('click', saveApiKey);
@@ -674,11 +760,17 @@
     document.getElementById('regenerateBtn')?.addEventListener('click', regenerateLast);
     document.getElementById('clearChatBtn')?.addEventListener('click', clearChat);
     document.getElementById('toggleTimestampBtn')?.addEventListener('click', toggleTimestamp);
-    document.getElementById('messageInput')?.addEventListener('keydown', (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+    document.getElementById('refreshMemoryBtn')?.addEventListener('click', forceSynthesize);
+    document.getElementById('saveRoleBtn')?.addEventListener('click', saveCurrentRole);
+    document.getElementById('deleteRoleBtn')?.addEventListener('click', deleteCurrentRole);
+    document.getElementById('newRoleBtn')?.addEventListener('click', createNewRole);
+    document.getElementById('messageInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
     function autoResize() { const inp = document.getElementById('messageInput'); inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 80) + 'px'; }
     document.getElementById('messageInput')?.addEventListener('input', autoResize);
 
-    loadArchives(); loadCurrent(); updateArchiveButtons(); updateApiKeyUI(); renderFullHistory(); loadPanelStates();
+    loadRolesFromLocal();
+    updateApiKeyUI();
+    loadPanelStates();
 </script>
 </body>
 </html>
